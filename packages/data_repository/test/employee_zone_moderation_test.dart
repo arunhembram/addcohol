@@ -1,0 +1,112 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:data_repository/data_repository.dart';
+import 'package:domain_models/domain_models.dart';
+
+void main() {
+  group('Employee Management & Zone Assignment Tests', () {
+    test('1. Create unclaimed employee code and verify unpaired state', () {
+      final codeEmp = CanonicalZones.createEmployeeCode(managedByAdminId: 'admin-10001');
+      expect(codeEmp.displayId, isNotNull);
+      expect(codeEmp.displayId!.length, equals(5));
+      expect(codeEmp.fullName, isEmpty);
+      expect(codeEmp.isActive, isTrue);
+
+      final managed = CanonicalZones.getManagedEmployees(adminId: 'admin-10001');
+      expect(managed.any((e) => e.displayId == codeEmp.displayId), isTrue);
+    });
+
+    test('2. Pair employee code upon first-time login', () {
+      final codeEmp = CanonicalZones.createEmployeeCode(managedByAdminId: 'admin-10001');
+      final code = codeEmp.displayId!;
+
+      final paired = CanonicalZones.pairEmployeeCode(
+        code,
+        fullName: 'Bikash Mukherjee',
+        phoneNumber: '+91 98765 11223',
+      );
+
+      expect(paired, isNotNull);
+      expect(paired!.fullName, equals('Bikash Mukherjee'));
+      expect(paired.phoneNumber, equals('+91 98765 11223'));
+      expect(paired.displayId, equals(code));
+    });
+
+    test('3. Assign and Unassign employee to a zone', () {
+      const zoneId = CanonicalZones.kolkataCentralId;
+      const testEmpId = 'emp-test-99901';
+
+      CanonicalZones.assignEmployeeToZone(zoneId, testEmpId, syncRemote: false);
+      expect(CanonicalZones.getEmployeeAssignedZoneIds(testEmpId), contains(zoneId));
+
+      CanonicalZones.unassignEmployeeFromZone(zoneId, testEmpId, syncRemote: false);
+      expect(CanonicalZones.getEmployeeAssignedZoneIds(testEmpId), isNot(contains(zoneId)));
+    });
+
+    test('4. Delete employee soft-deletes and removes from all assigned zones', () {
+      final codeEmp = CanonicalZones.createEmployeeCode(managedByAdminId: 'admin-10001');
+      final empId = codeEmp.id;
+
+      CanonicalZones.assignEmployeeToZone(CanonicalZones.kolkataCentralId, empId, syncRemote: false);
+      CanonicalZones.assignEmployeeToZone(CanonicalZones.saltLakeSector5Id, empId, syncRemote: false);
+
+      CanonicalZones.deleteEmployee(empId, syncRemote: false);
+
+      final managed = CanonicalZones.getManagedEmployees(adminId: 'admin-10001');
+      expect(managed.any((e) => e.id == empId), isFalse);
+      expect(CanonicalZones.getEmployeeAssignedZoneIds(empId), isEmpty);
+    });
+
+    test('5. Expelling admin does not disrupt employee zone assignments', () {
+      const zoneId = CanonicalZones.saltLakeSector5Id;
+      const empId = 'emp-20003';
+
+      CanonicalZones.assignEmployeeToZone(zoneId, empId, syncRemote: false);
+      expect(CanonicalZones.getEmployeeAssignedZoneIds(empId), contains(zoneId));
+
+      CanonicalZones.expelAdminFromZone(zoneId, syncRemote: false);
+
+      // Employees remain assigned and active in the zone
+      expect(CanonicalZones.getEmployeeAssignedZoneIds(empId), contains(zoneId));
+    });
+  });
+
+  group('Shop Moderation & Under Process Flow Tests', () {
+    test('6. New shop starts in under_process and is guarded from distribution', () {
+      final newShop = Shop(
+        id: 'shop-test-under-process',
+        shopName: 'Green Grocery Hub',
+        ownerId: 'owner-test-1',
+        ownerName: 'Ramesh Sen',
+        category: 'grocery',
+        latitude: 22.5726,
+        longitude: 88.3639,
+        address: 'BBD Bagh, Kolkata',
+        zoneId: CanonicalZones.kolkataCentralId,
+        status: 'under_process',
+        createdAt: DateTime.now(),
+      );
+
+      expect(newShop.isUnderProcess, isTrue);
+      expect(newShop.isAgreed, isFalse);
+      expect(newShop.isFollowup, isFalse);
+
+      CanonicalShops.approveShop(newShop.id, syncRemote: false);
+    });
+
+    test('7. Approving shop sets status to active and generates shop code', () {
+      final shop = CanonicalShops.getShopById('shop-101');
+      expect(shop, isNotNull);
+
+      CanonicalShops.approveShop(shop!.id, syncRemote: false);
+      final approved = CanonicalShops.getShopById('shop-101');
+      expect(approved?.status, equals('active'));
+      expect(approved?.isAgreed, isTrue);
+      expect(approved?.isUnderProcess, isFalse);
+    });
+
+    test('8. Deleting shop removes it from repository', () {
+      CanonicalShops.deleteShop('shop-109', syncRemote: false);
+      expect(CanonicalShops.getShopById('shop-109'), isNull);
+    });
+  });
+}

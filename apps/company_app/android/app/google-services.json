@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "67607803017",
+    "project_id": "addcohol-92ad1",
+    "storage_bucket": "addcohol-92ad1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67607803017:android:50b510bf24e96312994258",
+        "android_client_info": {
+          "package_name": "com.shopad.company_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIECR2isw2tWilEDqS9N-avbD4ca5IU7o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,477 @@
+{
+  "users": [
+    {
+      "id": "usr-admin-01",
+      "role": "owner_admin",
+      "full_name": "Ariful Rahman (Owner)",
+      "phone": "01711000001",
+      "email": "admin@adproof.com",
+      "password_hash": "$2a$10$YtHd1mKfGnakL1fVO36dKesXTxJYr/KW/nMdpoUGPHIOMq/oI56k6",
+      "is_active": true,
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "updated_at": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "usr-emp-01",
+      "role": "field_employee",
+      "full_name": "Tariqul Islam",
+      "phone": "01711000002",
+      "email": "tariq@adproof.com",
+      "password_hash": "$2a$10$q8OstYGCf8pkV9Opha3rDeS6kiD10Cz32oNG827mQNHBEe5CvbHpG",
+      "is_active": true,
+      "created_at": "2026-01-05T00:00:00.000Z",
+      "updated_at": "2026-01-05T00:00:00.000Z"
+    },
+    {
+      "id": "usr-emp-02",
+      "role": "field_employee",
+      "full_name": "Kamal Hossain",
+      "phone": "01711000003",
+      "email": "kamal@adproof.com",
+      "password_hash": "$2a$10$q8OstYGCf8pkV9Opha3rDeS6kiD10Cz32oNG827mQNHBEe5CvbHpG",
+      "is_active": true,
+      "created_at": "2026-01-05T00:00:00.000Z",
+      "updated_at": "2026-01-05T00:00:00.000Z"
+    },
+    {
+      "id": "usr-mer-01",
+      "role": "merchant",
+      "full_name": "Abdul Gafur (Mirpur Tea)",
+      "phone": "01811000001",
+      "email": null,
+      "password_hash": "$2a$10$d/.JdeyutnndJ1HIJqBueuC2UYUeuvguytNSNxe5UdHTEM6B0OGEu",
+      "is_active": true,
+      "created_at": "2026-02-01T00:00:00.000Z",
+      "updated_at": "2026-02-01T00:00:00.000Z"
+    },
+    {
+      "id": "usr-mer-02",
+      "role": "merchant",
+      "full_name": "Rahim Mia (Uttara Store)",
+      "phone": "01811000002",
+      "email": null,
+      "password_hash": "$2a$10$d/.JdeyutnndJ1HIJqBueuC2UYUeuvguytNSNxe5UdHTEM6B0OGEu",
+      "is_active": true,
+      "created_at": "2026-02-01T00:00:00.000Z",
+      "updated_at": "2026-02-01T00:00:00.000Z"
+    },
+    {
+      "id": "usr-comp-01",
+      "role": "company_user",
+      "full_name": "Sarah Khan (PRAN)",
+      "phone": "01911000001",
+      "email": "sarah@pran.com",
+      "password_hash": "$2a$10$A8.YJcgB0CKWxvoPiQRu4.mNXlFUOAYoIKg82zLs/AeOWvyxC0nbm",
+      "is_active": true,
+      "created_at": "2026-02-10T00:00:00.000Z",
+      "updated_at": "2026-02-10T00:00:00.000Z"
+    },
+    {
+      "id": "usr-comp-02",
+      "role": "company_user",
+      "full_name": "Zakir Ahmed (ACI)",
+      "phone": "01911000002",
+      "email": "zakir@aci.com",
+      "password_hash": "$2a$10$A8.YJcgB0CKWxvoPiQRu4.mNXlFUOAYoIKg82zLs/AeOWvyxC0nbm",
+      "is_active": true,
+      "created_at": "2026-02-10T00:00:00.000Z",
+      "updated_at": "2026-02-10T00:00:00.000Z"
+    }
+  ],
+  "companies": [
+    {
+      "id": "cmp-01",
+      "name": "PRAN-RFL Group",
+      "contact_person_name": "Sarah Khan",
+      "contact_phone": "01911000001",
+      "contact_email": "sarah@pran.com",
+      "is_active": true,
+      "created_at": "2026-02-10T00:00:00.000Z"
+    },
+    {
+      "id": "cmp-02",
+      "name": "ACI Consumer Brands",
+      "contact_person_name": "Zakir Ahmed",
+      "contact_phone": "01911000002",
+      "contact_email": "zakir@aci.com",
+      "is_active": true,
+      "created_at": "2026-02-10T00:00:00.000Z"
+    }
+  ],
+  "company_users": [
+    {
+      "id": "cu-01",
+      "company_id": "cmp-01",
+      "user_id": "usr-comp-01",
+      "permission_level": "company_admin",
+      "created_at": "2026-02-10T00:00:00.000Z"
+    },
+    {
+      "id": "cu-02",
+      "company_id": "cmp-02",
+      "user_id": "usr-comp-02",
+      "permission_level": "company_admin",
+      "created_at": "2026-02-10T00:00:00.000Z"
+    }
+  ],
+  "zones": [
+    {
+      "id": "zone-01",
+      "name": "Mirpur Zone A",
+      "description": "Mirpur 1, 2, and 10 Commercial Corridor",
+      "boundary_geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[90.355,23.795],[90.38,23.795],[90.38,23.82],[90.355,23.82],[90.355,23.795]]]}",
+      "status": "active",
+      "created_by_user_id": "usr-admin-01",
+      "created_at": "2026-01-10T00:00:00.000Z",
+      "updated_at": "2026-01-10T00:00:00.000Z"
+    },
+    {
+      "id": "zone-02",
+      "name": "Uttara Zone B",
+      "description": "Uttara Sector 3, 7, and 9 Retail Hub",
+      "boundary_geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[90.37,23.865],[90.395,23.865],[90.395,23.885],[90.37,23.885],[90.37,23.865]]]}",
+      "status": "active",
+      "created_by_user_id": "usr-admin-01",
+      "created_at": "2026-01-10T00:00:00.000Z",
+      "updated_at": "2026-01-10T00:00:00.000Z"
+    },
+    {
+      "id": "zone-03",
+      "name": "Dhanmondi Zone C",
+      "description": "Dhanmondi Road 27 & Satmasjid Road Cafes and Outlets",
+      "boundary_geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[90.365,23.735],[90.385,23.735],[90.385,23.755],[90.365,23.755],[90.365,23.735]]]}",
+      "status": "active",
+      "created_by_user_id": "usr-admin-01",
+      "created_at": "2026-01-10T00:00:00.000Z",
+      "updated_at": "2026-01-10T00:00:00.000Z"
+    }
+  ],
+  "zone_employee_assignments": [
+    {
+      "id": "zea-01",
+      "zone_id": "zone-01",
+      "employee_user_id": "usr-emp-01",
+      "assignment_role": "primary",
+      "is_active": true,
+      "assigned_at": "2026-01-15T00:00:00.000Z",
+      "unassigned_at": null
+    },
+    {
+      "id": "zea-02",
+      "zone_id": "zone-02",
+      "employee_user_id": "usr-emp-02",
+      "assignment_role": "primary",
+      "is_active": true,
+      "assigned_at": "2026-01-15T00:00:00.000Z",
+      "unassigned_at": null
+    }
+  ],
+  "zone_company_assignments": [
+    {
+      "id": "zca-01",
+      "zone_id": "zone-01",
+      "company_id": "cmp-01",
+      "campaign_name": "PRAN Frooto Summer 2026",
+      "campaign_description": "Branded QR sticker campaign across tea stalls and food outlets",
+      "campaign_start_date": "2026-05-01",
+      "campaign_end_date": "2026-12-31",
+      "status": "active",
+      "exclusivity_enabled": true,
+      "assigned_by_user_id": "usr-admin-01",
+      "created_at": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "id": "zca-02",
+      "zone_id": "zone-02",
+      "company_id": "cmp-02",
+      "campaign_name": "ACI Pure Salt Campaign 2026",
+      "campaign_description": "Exclusive retail counter branding in Uttara grocery outlets",
+      "campaign_start_date": "2026-06-01",
+      "campaign_end_date": "2026-11-30",
+      "status": "active",
+      "exclusivity_enabled": true,
+      "assigned_by_user_id": "usr-admin-01",
+      "created_at": "2026-05-25T00:00:00.000Z"
+    }
+  ],
+  "shops": [
+    {
+      "id": "shp-01",
+      "shop_code": "10849201",
+      "shop_name": "Gafur Bhaiyer Cha (গফুর ভাইয়ের চা)",
+      "category": "tea_stall",
+      "logo_type": "tea",
+      "address": "Plot 12, Road 4, Mirpur 1, Dhaka",
+      "latitude": 23.8041,
+      "longitude": 90.3687,
+      "zone_id": "zone-01",
+      "merchant_phone": "01811000001",
+      "merchant_user_id": "usr-mer-01",
+      "upload_mode": "both",
+      "status": "active",
+      "created_by_user_id": "usr-emp-01",
+      "created_at": "2026-02-01T00:00:00.000Z",
+      "updated_at": "2026-02-01T00:00:00.000Z"
+    },
+    {
+      "id": "shp-02",
+      "shop_code": "20938472",
+      "shop_name": "Bismillah General Store (বিসমিল্লাহ জেনারেল স্টোর)",
+      "category": "grocery_shop",
+      "logo_type": "grocery",
+      "address": "Shop 5, Mirpur 10 Circle, Dhaka",
+      "latitude": 23.8072,
+      "longitude": 90.3695,
+      "zone_id": "zone-01",
+      "merchant_phone": null,
+      "merchant_user_id": null,
+      "upload_mode": "employee_managed_upload",
+      "status": "active",
+      "created_by_user_id": "usr-emp-01",
+      "created_at": "2026-02-02T00:00:00.000Z",
+      "updated_at": "2026-02-02T00:00:00.000Z"
+    },
+    {
+      "id": "shp-03",
+      "shop_code": "30495821",
+      "shop_name": "Dhaka Biryani House (ঢাকা বিরিয়ানি হাউজ)",
+      "category": "food_stall",
+      "logo_type": "food",
+      "address": "Main Road, Mirpur 2, Dhaka",
+      "latitude": 23.8025,
+      "longitude": 90.3618,
+      "zone_id": "zone-01",
+      "merchant_phone": "01811000003",
+      "merchant_user_id": null,
+      "upload_mode": "merchant_self_upload",
+      "status": "active",
+      "created_by_user_id": "usr-emp-01",
+      "created_at": "2026-02-05T00:00:00.000Z",
+      "updated_at": "2026-02-05T00:00:00.000Z"
+    },
+    {
+      "id": "shp-04",
+      "shop_code": "40192837",
+      "shop_name": "Medilife Pharmacy (মেডিলাইফ ফার্মেসি)",
+      "category": "pharmacy",
+      "logo_type": "pharmacy",
+      "address": "Sector 3, Jashimuddin Road, Uttara, Dhaka",
+      "latitude": 23.8725,
+      "longitude": 90.3812,
+      "zone_id": "zone-02",
+      "merchant_phone": "01811000004",
+      "merchant_user_id": null,
+      "upload_mode": "both",
+      "status": "active",
+      "created_by_user_id": "usr-emp-02",
+      "created_at": "2026-02-10T00:00:00.000Z",
+      "updated_at": "2026-02-10T00:00:00.000Z"
+    },
+    {
+      "id": "shp-05",
+      "shop_code": "50293841",
+      "shop_name": "Rahim Vegetable Corner (রহিম কাঁচাবাজার)",
+      "category": "vegetable_shop",
+      "logo_type": "vegetable",
+      "address": "Sector 7 Market, Uttara, Dhaka",
+      "latitude": 23.8768,
+      "longitude": 90.3845,
+      "zone_id": "zone-02",
+      "merchant_phone": "01811000002",
+      "merchant_user_id": "usr-mer-02",
+      "upload_mode": "merchant_self_upload",
+      "status": "active",
+      "created_by_user_id": "usr-emp-02",
+      "created_at": "2026-02-12T00:00:00.000Z",
+      "updated_at": "2026-02-12T00:00:00.000Z"
+    },
+    {
+      "id": "shp-06",
+      "shop_code": "60384729",
+      "shop_name": "Fresh Fish Center (তাজা মাছের আড়ত)",
+      "category": "fish_shop",
+      "logo_type": "fish",
+      "address": "Sector 9 Bazar, Uttara, Dhaka",
+      "latitude": 23.8795,
+      "longitude": 90.3782,
+      "zone_id": "zone-02",
+      "merchant_phone": null,
+      "merchant_user_id": null,
+      "upload_mode": "employee_managed_upload",
+      "status": "active",
+      "created_by_user_id": "usr-emp-02",
+      "created_at": "2026-02-15T00:00:00.000Z",
+      "updated_at": "2026-02-15T00:00:00.000Z"
+    },
+    {
+      "id": "shp-07",
+      "shop_code": "70482910",
+      "shop_name": "Al-Madina Departmental (আল-মদিনা ডিপার্টমেন্টাল)",
+      "category": "grocery_shop",
+      "logo_type": "grocery",
+      "address": "Road 27, Dhanmondi, Dhaka",
+      "latitude": 23.7482,
+      "longitude": 90.3725,
+      "zone_id": "zone-03",
+      "merchant_phone": "01811000005",
+      "merchant_user_id": null,
+      "upload_mode": "both",
+      "status": "active",
+      "created_by_user_id": "usr-admin-01",
+      "created_at": "2026-03-01T00:00:00.000Z",
+      "updated_at": "2026-03-01T00:00:00.000Z"
+    }
+  ],
+  "daily_uploads": [
+    {
+      "id": "upl-01",
+      "shop_id": "shp-01",
+      "zone_id": "zone-01",
+      "zone_company_assignment_id": "zca-01",
+      "business_date": "2026-09-13",
+      "uploaded_by_user_id": "usr-mer-01",
+      "uploader_type": "merchant",
+      "image_storage_path": "uploads/proofs/sample_mirpur_tea.jpg",
+      "image_deleted_at": null,
+      "captured_at": "2026-09-13T16:34:24.320Z",
+      "uploaded_at": "2026-09-13T16:34:24.320Z",
+      "captured_latitude": 23.80415,
+      "captured_longitude": 90.36872,
+      "distance_meters": 6.2,
+      "is_distance_suspicious": false,
+      "status": "verified",
+      "rejection_reason": null,
+      "expires_at": "2026-09-13T18:29:59.999Z",
+      "created_at": "2026-09-13T16:34:24.320Z"
+    },
+    {
+      "id": "upl-02",
+      "shop_id": "shp-02",
+      "zone_id": "zone-01",
+      "zone_company_assignment_id": "zca-01",
+      "business_date": "2026-09-13",
+      "uploaded_by_user_id": "usr-emp-01",
+      "uploader_type": "employee",
+      "image_storage_path": "uploads/proofs/sample_mirpur_grocery.jpg",
+      "image_deleted_at": null,
+      "captured_at": "2026-09-13T16:34:24.320Z",
+      "uploaded_at": "2026-09-13T16:34:24.320Z",
+      "captured_latitude": 23.80718,
+      "captured_longitude": 90.36948,
+      "distance_meters": 3.1,
+      "is_distance_suspicious": false,
+      "status": "submitted",
+      "rejection_reason": null,
+      "expires_at": "2026-09-13T18:29:59.999Z",
+      "created_at": "2026-09-13T16:34:24.320Z"
+    },
+    {
+      "id": "upl-03",
+      "shop_id": "shp-05",
+      "zone_id": "zone-02",
+      "zone_company_assignment_id": "zca-02",
+      "business_date": "2026-09-13",
+      "uploaded_by_user_id": "usr-mer-02",
+      "uploader_type": "merchant",
+      "image_storage_path": "uploads/proofs/sample_uttara_veg.jpg",
+      "image_deleted_at": null,
+      "captured_at": "2026-09-13T16:34:24.320Z",
+      "uploaded_at": "2026-09-13T16:34:24.320Z",
+      "captured_latitude": 23.87675,
+      "captured_longitude": 90.38448,
+      "distance_meters": 5.8,
+      "is_distance_suspicious": false,
+      "status": "rejected",
+      "rejection_reason": "বিজ্ঞাপন পোস্টারটি স্পষ্ট নয়, QR কোডের পাশে পুরো পোস্টার ফ্রেম সহ পুনরায় ছবি তুলুন।",
+      "expires_at": "2026-09-13T18:29:59.999Z",
+      "created_at": "2026-09-13T16:34:24.320Z"
+    }
+  ],
+  "issue_reports": [
+    {
+      "id": "iss-01",
+      "shop_id": "shp-03",
+      "zone_id": "zone-01",
+      "created_by_user_id": "usr-emp-01",
+      "issue_type": "poster_damaged",
+      "notes": "বৃষ্টির কারণে পোস্টারের নিচের অংশ ছিঁড়ে গেছে, নতুন পোস্টার প্রয়োজন।",
+      "photo_path": null,
+      "status": "open",
+      "assigned_employee_user_id": "usr-emp-01",
+      "created_at": "2026-09-13T16:34:24.320Z",
+      "resolved_at": null
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-01",
+      "user_id": "usr-mer-02",
+      "title": "বিজ্ঞাপনের ছবি বাতিল করা হয়েছে",
+      "body": "আপনার আজকের বিজ্ঞাপনের ছবি অনুমোদন করা হয়নি। কারণ: পোস্টারটি স্পষ্ট নয়। অনুগ্রহ করে পুনরায় ছবি তুলুন।",
+      "notification_type": "upload_rejected",
+      "read_at": null,
+      "created_at": "2026-09-13T16:34:24.320Z"
+    },
+    {
+      "id": "notif-02",
+      "user_id": "usr-emp-01",
+      "title": "মিরপুর জোন এ তে নতুন সমস্যা রিপোর্ট",
+      "body": "ঢাকা বিরিয়ানি হাউজ এর পোস্টার ক্ষতিগ্রস্ত হয়েছে। অনুগ্রহ করে পরিদর্শন করুন।",
+      "notification_type": "issue_reported",
+      "read_at": null,
+      "created_at": "2026-09-13T16:34:24.320Z"
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "aud-01",
+      "actor_user_id": "usr-admin-01",
+      "action_type": "create",
+      "entity_type": "zone",
+      "entity_id": "zone-01",
+      "old_value_json": null,
+      "new_value_json": "{\"name\":\"Mirpur Zone A\"}",
+      "created_at": "2026-01-10T10:00:00.000Z"
+    },
+    {
+      "id": "aud-02",
+      "actor_user_id": "usr-admin-01",
+      "action_type": "assign",
+      "entity_type": "zone_company_assignment",
+      "entity_id": "zca-01",
+      "old_value_json": null,
+      "new_value_json": "{\"company_id\":\"cmp-01\",\"zone_id\":\"zone-01\",\"campaign\":\"PRAN Frooto Summer 2026\"}",
+      "created_at": "2026-04-20T11:30:00.000Z"
+    },
+    {
+      "id": "aud-03",
+      "actor_user_id": "usr-admin-01",
+      "action_type": "verify",
+      "entity_type": "upload",
+      "entity_id": "upl-01",
+      "old_value_json": "{\"status\":\"submitted\"}",
+      "new_value_json": "{\"status\":\"verified\"}",
+      "created_at": "2026-09-13T16:34:24.320Z"
+    },
+    {
+      "id": "aud-4f322397",
+      "actor_user_id": "usr-admin-01",
+      "action_type": "login",
+      "entity_type": "user",
+      "entity_id": "usr-admin-01",
+      "old_value_json": null,
+      "new_value_json": "{\"method\":\"password\",\"role\":\"owner_admin\"}",
+      "created_at": "2026-09-13T16:42:21.452Z"
+    },
+    {
+      "id": "aud-c963ff7a",
+      "actor_user_id": "usr-admin-01",
+      "action_type": "login",
+      "entity_type": "user",
+      "entity_id": "usr-admin-01",
+      "old_value_json": null,
+      "new_value_json": "{\"method\":\"password\",\"role\":\"owner_admin\"}",
+      "created_at": "2026-09-14T20:42:52.861Z"
+    }
+  ]
+}

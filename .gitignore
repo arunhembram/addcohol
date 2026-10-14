@@ -1,0 +1,54 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Dart & Flutter build artifacts
+.dart_tool/
+**/.dart_tool/
+build/
+**/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+**/coverage/
+
+# Android / Gradle artifacts
+.gradle/
+**/.gradle/
+**/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+*.apk
+*.aab
+
+# Node & Vercel
+node_modules/
+**/node_modules/
+.vercel
+
+# Crash and process logs
+*.log
+hs_err_pid*
+
+# IDE settings
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Ignore loose temporary downloads and scripts in project root
+/New folder/
+/Screenshot*
+/WhatsApp Image*
+/holding_*
+/edited_*
+/extracted_*
+/*.png
+/*.jpg
+/*.jpeg
+/*.pdf
+/*.html
+/*.py
+/scratch_check_zones.dart

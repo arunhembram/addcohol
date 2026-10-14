@@ -1,0 +1,31 @@
+name: shop_ad_platform
+repository: https://github.com/shopad/shop_ad_platform
+
+packages:
+  - apps/*
+  - packages/*
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
+
+scripts:
+  analyze:
+    run: melos exec -- "flutter analyze ."
+    description: Run `flutter analyze` in all apps and packages.
+
+  test:
+    run: melos exec --dir-exists="test" -- "flutter test"
+    description: Run `flutter test` in all apps and packages with tests.
+
+  format:
+    run: dart format --line-length=100 .
+    description: Run `dart format` across the whole repository.
+
+  format:check:
+    run: dart format --output=none --set-exit-if-changed --line-length=100 .
+    description: Verify that code is formatted.
+
+  clean:
+    run: melos exec -- "flutter clean"
+    description: Clean build artifacts across all workspaces.
