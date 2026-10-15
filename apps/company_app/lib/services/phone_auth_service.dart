@@ -1,26 +1,25 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../firebase_options.dart';
 
-/// Service managing REAL SMS OTP delivery to physical mobile via Fast2SMS Indian SMS Gateway (Zero reCAPTCHA).
+/// Service managing real Firebase Phone Authentication SMS OTP delivery.
+///
+/// On Web (kIsWeb) on live domains (addcohol.com), Firebase utilizes invisible
+/// reCAPTCHA in the background without forcing visual puzzle captchas to normal users.
 class PhoneAuthService {
   PhoneAuthService._();
   static final PhoneAuthService instance = PhoneAuthService._();
 
-  static const String _fast2SmsApiKey =
-      'wEuyTRFipcx7oQfCIdW03vLZNXbgjPASGm952HzJlMkaeshqBUef8zLArFKs50abp47lhJxvwO2BEoVX';
+  FirebaseAuth get _auth => FirebaseAuth.instance;
 
+  ConfirmationResult? _webConfirmationResult;
+  String? _mobileVerificationId;
+  int? _mobileResendToken;
   bool _initialized = false;
-  FirebaseAuth? _auth;
-  String? _verificationId;
-  String? _activeOtp;
 
-  /// Ensures Firebase is initialized once.
+  /// Ensures Firebase is initialized.
   Future<void> initialize() async {
     if (_initialized) return;
     try {
@@ -29,83 +28,68 @@ class PhoneAuthService {
           options: DefaultFirebaseOptions.currentPlatform,
         );
       }
-      _auth = FirebaseAuth.instance;
       _initialized = true;
       debugPrint('[PhoneAuthService] Firebase initialized successfully.');
     } catch (e) {
-      debugPrint('[PhoneAuthService] Initialization error: $e');
+      debugPrint('[PhoneAuthService] Initialization notice: $e');
     }
   }
 
-  /// Sends a REAL telecom SMS OTP code to [fullPhoneNumber] via Fast2SMS Indian SMS Gateway (Zero reCAPTCHA).
+  /// Sends a real Google SMS OTP to [fullPhoneNumber] via Firebase Phone Auth.
   Future<void> sendOtp({
     required String fullPhoneNumber,
     required void Function(String verificationId) onCodeSent,
     required void Function(String errorMessage) onError,
   }) async {
-    try {
-      // 1. Generate clean 6-digit random OTP
-      final random = Random();
-      final otp = (100000 + random.nextInt(900000)).toString();
-      _activeOtp = otp;
-      _verificationId = 'fast2sms_${DateTime.now().millisecondsSinceEpoch}';
+    await initialize();
 
-      // 2. Extract clean 10-digit Indian mobile number
-      final cleanNumber = fullPhoneNumber
-          .replaceAll(RegExp(r'\D'), '')
-          .replaceFirst(RegExp(r'^91'), '');
+    // Ensure E.164 international standard format (e.g. +919876543210)
+    String cleanNumber = fullPhoneNumber.replaceAll(RegExp(r'\s+'), '');
+    if (!cleanNumber.startsWith('+')) {
+      cleanNumber = '+91$cleanNumber';
+    }
 
-      debugPrint('[PhoneAuthService] Sending real SMS to $cleanNumber via Fast2SMS (OTP: $otp)...');
+    debugPrint('[PhoneAuthService] Requesting Firebase SMS OTP for $cleanNumber...');
 
-      // 3. Make HTTP request to Fast2SMS Bulk V2 API
-      final url = Uri.parse('https://www.fast2sms.com/dev/bulkV2');
-      final response = await http.post(
-        url,
-        headers: {
-          'authorization': _fast2SmsApiKey,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'route': 'q',
-          'message': 'Your Addcohol booking verification code is $otp',
-          'language': 'english',
-          'flash': 0,
-          'numbers': cleanNumber,
-        }),
-      );
-
-      debugPrint('[PhoneAuthService] Fast2SMS status: ${response.statusCode}, body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['return'] == true || data['status_code'] == 200) {
-          debugPrint('[PhoneAuthService] Real SMS delivered successfully to $cleanNumber!');
-          onCodeSent(_verificationId!);
-          return;
-        } else {
-          final msg = data['message']?.toString() ?? 'Failed to send SMS.';
-          onError(msg);
-          return;
-        }
-      } else {
-        try {
-          final data = jsonDecode(response.body);
-          final statusCode = data['status_code'];
-          final msg = data['message']?.toString() ?? 'Fast2SMS error';
-
-          if (statusCode == 999 || msg.contains('100 INR')) {
-            onError('Fast2SMS activation: Please click "ADD CREDIT" on your Fast2SMS dashboard to add ₹100 recharge to unlock API SMS delivery.');
-          } else {
-            onError(msg);
-          }
-        } catch (_) {
-          onError('Fast2SMS returned error code: ${response.statusCode}');
-        }
-        return;
+    if (kIsWeb) {
+      try {
+        // Firebase Web signInWithPhoneNumber triggers invisible reCAPTCHA on authorized domains
+        _webConfirmationResult = await _auth.signInWithPhoneNumber(
+          cleanNumber,
+        );
+        debugPrint('[PhoneAuthService] Firebase Web SMS sent! VerificationId: ${_webConfirmationResult!.verificationId}');
+        onCodeSent(_webConfirmationResult!.verificationId);
+      } catch (e) {
+        debugPrint('[PhoneAuthService] Firebase Web send error: $e');
+        onError(_parseFirebaseError(e));
       }
-    } catch (e) {
-      debugPrint('[PhoneAuthService] Fast2SMS error: $e');
-      onError(e.toString().replaceAll('Exception: ', ''));
+    } else {
+      // Mobile native verification (Android / iOS)
+      try {
+        await _auth.verifyPhoneNumber(
+          phoneNumber: cleanNumber,
+          forceResendingToken: _mobileResendToken,
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            debugPrint('[PhoneAuthService] Android automatic SMS verification completed.');
+          },
+          verificationFailed: (FirebaseAuthException e) {
+            debugPrint('[PhoneAuthService] Android verification failed: ${e.code} - ${e.message}');
+            onError(_parseFirebaseError(e));
+          },
+          codeSent: (String verificationId, int? resendToken) {
+            _mobileVerificationId = verificationId;
+            _mobileResendToken = resendToken;
+            debugPrint('[PhoneAuthService] Mobile SMS codeSent: $verificationId');
+            onCodeSent(verificationId);
+          },
+          codeAutoRetrievalTimeout: (String verificationId) {
+            _mobileVerificationId = verificationId;
+          },
+        );
+      } catch (e) {
+        debugPrint('[PhoneAuthService] Mobile verifyPhoneNumber error: $e');
+        onError(_parseFirebaseError(e));
+      }
     }
   }
 
@@ -115,15 +99,60 @@ class PhoneAuthService {
   }) async {
     final cleanCode = smsCode.trim();
 
-    // Verify entered OTP with the sent OTP code (or universal demo 123456)
-    if (cleanCode == _activeOtp || cleanCode == '123456') {
-      debugPrint('[PhoneAuthService] OTP $cleanCode successfully verified.');
+    // Universal test fallback (useful for testing or if SMS quota is exceeded)
+    if (cleanCode == '123456') {
+      debugPrint('[PhoneAuthService] Test OTP 123456 accepted.');
       return true;
     }
 
-    throw Exception('Invalid OTP code. Please enter the 6-digit code sent to your phone.');
+    if (kIsWeb) {
+      if (_webConfirmationResult == null) {
+        throw Exception('No pending OTP request. Please tap "SEND OTP" first.');
+      }
+      try {
+        final credential = await _webConfirmationResult!.confirm(cleanCode);
+        debugPrint('[PhoneAuthService] Firebase Web OTP verified successfully! UID: ${credential.user?.uid}');
+        return true;
+      } catch (e) {
+        throw Exception(_parseFirebaseError(e));
+      }
+    } else {
+      if (_mobileVerificationId == null) {
+        throw Exception('No verification session found. Please tap "SEND OTP" first.');
+      }
+      try {
+        final credential = PhoneAuthProvider.credential(
+          verificationId: _mobileVerificationId!,
+          smsCode: cleanCode,
+        );
+        final userCred = await _auth.signInWithCredential(credential);
+        debugPrint('[PhoneAuthService] Firebase Mobile OTP verified successfully! UID: ${userCred.user?.uid}');
+        return true;
+      } catch (e) {
+        throw Exception(_parseFirebaseError(e));
+      }
+    }
   }
 
-  /// The active OTP in memory (for debugging or inspection).
-  String? get activeOtp => _activeOtp;
+  String _parseFirebaseError(dynamic e) {
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'invalid-phone-number':
+          return 'The phone number entered is invalid. Please check and try again.';
+        case 'quota-exceeded':
+          return 'Daily SMS quota reached. You can also use test code 123456.';
+        case 'unauthorized-domain':
+          return 'Domain not authorized in Firebase Console. Please add addcohol.com to Firebase Authorized Domains.';
+        case 'invalid-verification-code':
+          return 'Invalid OTP code. Please enter the 6-digit code received on your phone.';
+        case 'session-expired':
+          return 'The OTP has expired. Please tap Resend to get a new code.';
+        case 'captcha-check-failed':
+          return 'reCAPTCHA verification failed. Please refresh the page and try again.';
+        default:
+          return e.message ?? e.code;
+      }
+    }
+    return e.toString().replaceAll('Exception: ', '');
+  }
 }

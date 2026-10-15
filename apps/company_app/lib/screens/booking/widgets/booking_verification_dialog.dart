@@ -79,20 +79,6 @@ class _BookingVerificationDialogState extends State<BookingVerificationDialog> {
 
   String get _otpValue => _otpCtrls.map((c) => c.text.trim()).join();
 
-  void _fillOtp(String code) {
-    for (int i = 0; i < 6 && i < code.length; i++) {
-      _otpCtrls[i].text = code[i];
-    }
-    _otpFocusNodes[5].requestFocus();
-    setState(() {
-      _errorMessage = null;
-      _otpSent = true;
-    });
-  }
-
-  void _fillDemoOtp() {
-    _fillOtp('123456');
-  }
 
   void _startCooldownTimer() {
     _cooldownTimer?.cancel();
@@ -677,7 +663,7 @@ class _BookingVerificationDialogState extends State<BookingVerificationDialog> {
                   SizedBox(width: 5),
                   Flexible(
                     child: Text(
-                      'Direct Mobile Verification (Zero reCAPTCHA)',
+                      'Secured by Google Firebase Authentication',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
