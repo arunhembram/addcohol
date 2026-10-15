@@ -193,6 +193,18 @@
       transition: all 0.25s ease;
     }
 
+    /* Responsive Two-Column First & Last Name Grid */
+    .name-grid-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.35rem;
+    }
+
+    .name-subgroup {
+      margin-bottom: 0 !important;
+    }
+
     .form-group {
       margin-bottom: 1.35rem;
     }
@@ -237,7 +249,7 @@
       color: var(--text-value);
       font-family: 'Instrument Sans', sans-serif;
       font-size: 1rem;
-      padding: 0 1rem;
+      padding: 0 0.95rem;
       outline: none;
       transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
     }
@@ -357,9 +369,9 @@
     }
 
     .error-msg {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--error-color);
-      margin-top: 0.4rem;
+      margin-top: 0.35rem;
       font-weight: 500;
       display: none;
       line-height: 1.35;
@@ -781,6 +793,10 @@
       .page-title {
         font-size: 1.95rem;
       }
+      .name-grid-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
       .phone-input {
         font-size: 1rem;
       }
@@ -816,22 +832,43 @@
     <main class="card" id="formCard">
       <form id="authForm" novalidate autocomplete="off">
 
-        <!-- 1. Name Field (Hidden in Login Mode) -->
-        <div class="form-group" id="nameGroup">
-          <div class="label-row">
-            <label for="fullName" class="field-label">Administrator Name</label>
+        <!-- 1. First Name & Last Name Fields (Hidden in Login Mode) -->
+        <div class="name-grid-row" id="nameFieldsGroup">
+          <!-- First Name -->
+          <div class="form-group name-subgroup">
+            <div class="label-row">
+              <label for="firstName" class="field-label">First Name</label>
+            </div>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              class="input-control"
+              placeholder="First name"
+              required
+              aria-required="true"
+              aria-describedby="firstNameError"
+            />
+            <div class="error-msg" id="firstNameError" role="alert">At least 2 letters required.</div>
           </div>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            class="input-control"
-            placeholder="Your full name"
-            required
-            aria-required="true"
-            aria-describedby="nameError"
-          />
-          <div class="error-msg" id="nameError" role="alert">Please enter your name (at least 2 letters).</div>
+
+          <!-- Last Name -->
+          <div class="form-group name-subgroup">
+            <div class="label-row">
+              <label for="lastName" class="field-label">Last Name</label>
+            </div>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              class="input-control"
+              placeholder="Last name"
+              required
+              aria-required="true"
+              aria-describedby="lastNameError"
+            />
+            <div class="error-msg" id="lastNameError" role="alert">Please enter last name.</div>
+          </div>
         </div>
 
         <!-- 2. Combined Phone Number Field (Hidden in Login Mode) -->
@@ -1054,24 +1091,27 @@
       // -------------------------------------------------------------
       const SEED_ADMINS = {
         '10001': {
-          fullName: 'Subhasis Ghosh',
           firstName: 'Subhasis',
+          lastName: 'Ghosh',
+          fullName: 'Subhasis Ghosh',
           phone: '+91 98765 43210',
           code: '10001',
           role: 'Master Administrator',
           zone: 'All Operational Zones'
         },
         '10002': {
-          fullName: 'Priya Mukherjee',
           firstName: 'Priya',
+          lastName: 'Mukherjee',
+          fullName: 'Priya Mukherjee',
           phone: '+91 98300 11223',
           code: '10002',
           role: 'Operations Administrator',
           zone: 'Zone 1 & 2'
         },
         '10003': {
-          fullName: 'Debanjan Sen',
           firstName: 'Debanjan',
+          lastName: 'Sen',
+          fullName: 'Debanjan Sen',
           phone: '+91 98455 66778',
           code: '10003',
           role: 'Dispatch Supervisor',
@@ -1081,7 +1121,6 @@
 
       // Helper to retrieve admin profile by 5-digit code
       function getAdminByCode(code) {
-        // First check localStorage for dynamically registered admins
         try {
           const localData = localStorage.getItem('addcohol_admin_' + code);
           if (localData) {
@@ -1090,7 +1129,6 @@
         } catch (e) {
           console.warn('LocalStorage error:', e);
         }
-        // Fallback to seed data
         return SEED_ADMINS[code] || null;
       }
 
@@ -1101,13 +1139,6 @@
         } catch (e) {
           console.warn('LocalStorage save error:', e);
         }
-      }
-
-      // Helper to extract first name
-      function extractFirstName(fullName) {
-        if (!fullName) return '';
-        const parts = fullName.trim().split(/\s+/);
-        return parts[0] ? (parts[0].charAt(0).toUpperCase() + parts[0].slice(1)) : '';
       }
 
       // -------------------------------------------------------------
@@ -1124,19 +1155,20 @@
 
       const formCard = document.getElementById('formCard');
       const authForm = document.getElementById('authForm');
-      const nameGroup = document.getElementById('nameGroup');
+      const nameFieldsGroup = document.getElementById('nameFieldsGroup');
+      const firstNameInput = document.getElementById('firstName');
+      const firstNameError = document.getElementById('firstNameError');
+      const lastNameInput = document.getElementById('lastName');
+      const lastNameError = document.getElementById('lastNameError');
+
       const phoneGroup = document.getElementById('phoneGroup');
-      const codeGroup = document.getElementById('codeGroup');
-      const codeLabel = document.getElementById('codeLabel');
-
-      const nameInput = document.getElementById('fullName');
-      const nameError = document.getElementById('nameError');
-
       const countrySelect = document.getElementById('countryCode');
       const phoneInput = document.getElementById('phoneNumber');
       const phoneWrapper = document.getElementById('phoneWrapper');
       const phoneError = document.getElementById('phoneError');
 
+      const codeGroup = document.getElementById('codeGroup');
+      const codeLabel = document.getElementById('codeLabel');
       const codeInput = document.getElementById('adminCode');
       const codeCounter = document.getElementById('codeCounter');
       const codeError = document.getElementById('codeError');
@@ -1180,9 +1212,9 @@
           tabLogin.setAttribute('aria-selected', 'false');
 
           pageTitle.textContent = 'Admin Sign up';
-          pageSubtitle.textContent = 'Enter your name, phone number and 5 digit admin code.';
+          pageSubtitle.textContent = 'Enter your first name, last name, phone and 5 digit admin code.';
           
-          nameGroup.style.display = 'block';
+          nameFieldsGroup.style.display = 'grid';
           phoneGroup.style.display = 'block';
           codeLabel.textContent = 'Admin Code';
           submitBtn.textContent = 'Sign up';
@@ -1198,7 +1230,7 @@
           pageTitle.textContent = 'Admin Log in';
           pageSubtitle.textContent = 'Enter your 5 digit code to access the admin dashboard.';
 
-          nameGroup.style.display = 'none';
+          nameFieldsGroup.style.display = 'none';
           phoneGroup.style.display = 'none';
           codeLabel.textContent = 'Enter your 5-digit code';
           submitBtn.textContent = 'Log in';
@@ -1227,16 +1259,20 @@
         codeInput.value = '10001';
         formatAndValidateCode();
         if (currentMode === 'signup') {
-          nameInput.value = 'Subhasis Ghosh';
+          firstNameInput.value = 'Subhasis';
+          lastNameInput.value = 'Ghosh';
           phoneInput.value = '98765 43210';
-          validateName();
+          validateFirstName();
+          validateLastName();
           formatAndValidatePhone();
         }
       });
 
       function clearErrors() {
-        nameInput.classList.remove('has-error');
-        nameError.classList.remove('visible');
+        firstNameInput.classList.remove('has-error');
+        firstNameError.classList.remove('visible');
+        lastNameInput.classList.remove('has-error');
+        lastNameError.classList.remove('visible');
         phoneWrapper.classList.remove('has-error');
         phoneError.classList.remove('visible');
         codeInput.classList.remove('has-error');
@@ -1246,23 +1282,44 @@
       // -------------------------------------------------------------
       // Field Validations
       // -------------------------------------------------------------
-      function validateName() {
+      function validateFirstName() {
         if (currentMode === 'login') return true;
-        const val = nameInput.value.trim();
+        const val = firstNameInput.value.trim();
         const letterRegex = /[a-zA-Z]/g;
         const letterMatches = val.match(letterRegex);
         const isValid = letterMatches && letterMatches.length >= 2;
 
         if (!isValid) {
-          nameInput.classList.add('has-error');
-          nameError.textContent = val.length === 0
-            ? 'Name is required'
-            : 'Please enter at least 2 letters';
-          nameError.classList.add('visible');
+          firstNameInput.classList.add('has-error');
+          firstNameError.textContent = val.length === 0
+            ? 'First name is required'
+            : 'At least 2 letters required';
+          firstNameError.classList.add('visible');
           return false;
         } else {
-          nameInput.classList.remove('has-error');
-          nameError.classList.remove('visible');
+          firstNameInput.classList.remove('has-error');
+          firstNameError.classList.remove('visible');
+          return true;
+        }
+      }
+
+      function validateLastName() {
+        if (currentMode === 'login') return true;
+        const val = lastNameInput.value.trim();
+        const letterRegex = /[a-zA-Z]/g;
+        const letterMatches = val.match(letterRegex);
+        const isValid = letterMatches && letterMatches.length >= 1;
+
+        if (!isValid) {
+          lastNameInput.classList.add('has-error');
+          lastNameError.textContent = val.length === 0
+            ? 'Last name is required'
+            : 'Please enter last name';
+          lastNameError.classList.add('visible');
+          return false;
+        } else {
+          lastNameInput.classList.remove('has-error');
+          lastNameError.classList.remove('visible');
           return true;
         }
       }
@@ -1343,11 +1400,18 @@
         return isValid;
       }
 
-      nameInput.addEventListener('blur', () => {
-        if (hasAttemptedSubmit || nameInput.value.trim().length > 0) validateName();
+      firstNameInput.addEventListener('blur', () => {
+        if (hasAttemptedSubmit || firstNameInput.value.trim().length > 0) validateFirstName();
       });
-      nameInput.addEventListener('input', () => {
-        if (nameInput.classList.contains('has-error')) validateName();
+      firstNameInput.addEventListener('input', () => {
+        if (firstNameInput.classList.contains('has-error')) validateFirstName();
+      });
+
+      lastNameInput.addEventListener('blur', () => {
+        if (hasAttemptedSubmit || lastNameInput.value.trim().length > 0) validateLastName();
+      });
+      lastNameInput.addEventListener('input', () => {
+        if (lastNameInput.classList.contains('has-error')) validateLastName();
       });
 
       phoneInput.addEventListener('input', () => {
@@ -1372,14 +1436,12 @@
       // Open Admin Dashboard View
       // -------------------------------------------------------------
       function openAdminDashboard(user) {
-        const firstName = user.firstName || extractFirstName(user.fullName) || 'Admin';
+        const fName = user.firstName || (user.fullName ? user.fullName.split(' ')[0] : 'Admin');
         
-        // Update user elements
-        adminAvatar.textContent = firstName.charAt(0).toUpperCase();
-        adminGreeting.textContent = `Hello, ${firstName}! 🛡️`;
+        adminAvatar.textContent = fName.charAt(0).toUpperCase();
+        adminGreeting.textContent = `Hello, ${fName}! 🛡️`;
         adminStatusText.textContent = `Super Admin • ID #${user.code}`;
 
-        // Hide form and header, show dashboard
         headerArea.style.display = 'none';
         authToggleArea.style.display = 'none';
         formCard.style.display = 'none';
@@ -1422,26 +1484,32 @@
 
         if (currentMode === 'signup') {
           // --- SIGN UP SUBMIT ---
-          const isNameValid = validateName();
+          const isFirstValid = validateFirstName();
+          const isLastValid = validateLastName();
           const isPhoneValid = formatAndValidatePhone(true);
           const isCodeValid = formatAndValidateCode(true);
 
-          if (!isNameValid || !isPhoneValid || !isCodeValid) {
-            if (!isNameValid) nameInput.focus();
+          if (!isFirstValid || !isLastValid || !isPhoneValid || !isCodeValid) {
+            if (!isFirstValid) firstNameInput.focus();
+            else if (!isLastValid) lastNameInput.focus();
             else if (!isPhoneValid) phoneInput.focus();
             else if (!isCodeValid) codeInput.focus();
             return;
           }
 
-          const rawFullName = nameInput.value.trim();
-          const fName = extractFirstName(rawFullName);
+          const rawFirst = firstNameInput.value.trim();
+          const rawLast = lastNameInput.value.trim();
+          const cleanFirst = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1);
+          const cleanLast = rawLast.charAt(0).toUpperCase() + rawLast.slice(1);
+          const fullDisplayName = `${cleanFirst} ${cleanLast}`;
           const code = codeInput.value.trim();
           const phone = `${countrySelect.value} ${phoneInput.value.trim()}`;
 
-          // Create & Save Admin Profile
+          // Create & Save Admin Profile with explicit firstName and lastName
           const newUser = {
-            fullName: rawFullName,
-            firstName: fName,
+            firstName: cleanFirst,
+            lastName: cleanLast,
+            fullName: fullDisplayName,
             phone: phone,
             code: code,
             role: 'Zone Administrator',
@@ -1452,7 +1520,7 @@
           lastRegisteredUser = newUser;
 
           // Populate Success Card
-          summaryName.textContent = rawFullName;
+          summaryName.textContent = fullDisplayName;
           summaryPhone.textContent = phone;
           summaryCode.textContent = code;
 
@@ -1498,7 +1566,7 @@
         headerArea.style.display = 'block';
         authToggleArea.style.display = 'block';
         formCard.style.display = 'block';
-        nameInput.focus();
+        firstNameInput.focus();
       });
     });
   </script>
