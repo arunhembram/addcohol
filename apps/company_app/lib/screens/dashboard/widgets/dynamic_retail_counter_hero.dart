@@ -26,12 +26,16 @@ class DynamicRetailCounterHero extends StatefulWidget {
   final VoidCallback? onExploreZones;
   final VoidCallback? onZonesClick;
   final VoidCallback? onLivePhotos;
+  final String? initialBrandName;
+  final VoidCallback? onLogout;
 
   const DynamicRetailCounterHero({
     super.key,
     this.onExploreZones,
     this.onZonesClick,
     this.onLivePhotos,
+    this.initialBrandName,
+    this.onLogout,
   });
 
   @override
@@ -44,8 +48,20 @@ class _DynamicRetailCounterHeroState extends State<DynamicRetailCounterHero> {
   @override
   void initState() {
     super.initState();
-    // Default to 'Maloye' as requested in example
-    _brandController = TextEditingController(text: 'Maloye');
+    final initial = widget.initialBrandName?.trim();
+    _brandController = TextEditingController(
+      text: (initial != null && initial.isNotEmpty) ? initial : 'Maloye',
+    );
+  }
+
+  @override
+  void didUpdateWidget(DynamicRetailCounterHero oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialBrandName != null &&
+        widget.initialBrandName != oldWidget.initialBrandName &&
+        widget.initialBrandName!.trim().isNotEmpty) {
+      _brandController.text = widget.initialBrandName!.trim();
+    }
   }
 
   @override
@@ -203,6 +219,45 @@ class _DynamicRetailCounterHeroState extends State<DynamicRetailCounterHero> {
                 ),
               ),
             ),
+            if (widget.initialBrandName != null &&
+                widget.initialBrandName!.trim().isNotEmpty) ...[
+              const SizedBox(width: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0E1624),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.verified, size: 13, color: Color(0xFFFFD43B)),
+                    const SizedBox(width: 5),
+                    Text(
+                      widget.initialBrandName!.trim(),
+                      style: GoogleFonts.dmSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    if (widget.onLogout != null) ...[
+                      const SizedBox(width: 8),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: widget.onLogout,
+                          child: const Tooltip(
+                            message: 'Log Out',
+                            child: Icon(Icons.logout_rounded, size: 14, color: Color(0xFF94A3B8)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ],

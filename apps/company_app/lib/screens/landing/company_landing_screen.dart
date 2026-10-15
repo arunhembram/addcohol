@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../dashboard/widgets/dynamic_retail_counter_hero.dart';
+import '../../../services/user_session_service.dart';
+import 'widgets/brand_entry_blur_gate.dart';
 
 /// Standalone Public Landing Page for addcohol:
 /// - Fonts: Bricolage Grotesque (800) for headings, DM Sans (400/500/600) for body
@@ -27,6 +29,45 @@ class CompanyLandingScreen extends ConsumerStatefulWidget {
 class _CompanyLandingScreenState extends ConsumerState<CompanyLandingScreen> {
   final GlobalKey _zoneSectionKey = GlobalKey();
   final GlobalKey _livePhotosSectionKey = GlobalKey();
+
+  bool _isCheckingSession = true;
+  bool _isUnlocked = false;
+  String? _savedBrandName;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCustomerSession();
+  }
+
+  Future<void> _checkCustomerSession() async {
+    final loggedIn = await UserSessionService.instance.isLoggedIn();
+    final brand = await UserSessionService.instance.getSavedBrandName();
+    if (mounted) {
+      setState(() {
+        _isCheckingSession = false;
+        _isUnlocked = loggedIn;
+        _savedBrandName = brand;
+      });
+    }
+  }
+
+  void _onVerified(String brandName, String phoneNumber) {
+    setState(() {
+      _isUnlocked = true;
+      _savedBrandName = brandName;
+    });
+  }
+
+  Future<void> _handleLogout() async {
+    await UserSessionService.instance.clearSession();
+    if (mounted) {
+      setState(() {
+        _isUnlocked = false;
+        _savedBrandName = null;
+      });
+    }
+  }
 
   static Future<void> launchAddcoholUrl() async {
     final uri = Uri.parse('https://addcohol.com');
@@ -54,33 +95,50 @@ class _CompanyLandingScreenState extends ConsumerState<CompanyLandingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white, // No black background anywhere
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 1. HERO SECTION (Full-width yellow #FFD43B background, 96px bottom padding)
-            DynamicRetailCounterHero(
-              onExploreZones: () => context.push('/map'),
-              onZonesClick: () => _scrollTo(_zoneSectionKey),
-              onLivePhotos: () => _scrollTo(_livePhotosSectionKey),
-            ),
+      body: Stack(
+        children: [
+          // 1. Landing Page Content
+          SingleChildScrollView(
+            physics: _isUnlocked
+                ? const AlwaysScrollableScrollPhysics()
+                : const NeverScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. HERO SECTION (Full-width yellow #FFD43B background, 96px bottom padding)
+                DynamicRetailCounterHero(
+                  onExploreZones: () => context.push('/map'),
+                  onZonesClick: () => _scrollTo(_zoneSectionKey),
+                  onLivePhotos: () => _scrollTo(_livePhotosSectionKey),
+                  initialBrandName: _savedBrandName,
+                  onLogout: _handleLogout,
+                ),
 
-            // 2. ZONE SECTION (White background, 104px top and bottom padding)
-            Container(
-              key: _zoneSectionKey,
-              child: _buildZoneSection(context),
-            ),
+                // 2. ZONE SECTION (White background, 104px top and bottom padding)
+                Container(
+                  key: _zoneSectionKey,
+                  child: _buildZoneSection(context),
+                ),
 
-            // 3. LIVE PHOTOS SECTION (Cream #FFF7DB background, 104px top and bottom padding)
-            Container(
-              key: _livePhotosSectionKey,
-              child: _buildLivePhotosSection(context),
-            ),
+                // 3. LIVE PHOTOS SECTION (Cream #FFF7DB background, 104px top and bottom padding)
+                Container(
+                  key: _livePhotosSectionKey,
+                  child: _buildLivePhotosSection(context),
+                ),
 
-            // 4. FOOTER (Navy #0E1624)
-            _buildFooter(context),
-          ],
-        ),
+                // 4. FOOTER (Navy #0E1624)
+                _buildFooter(context),
+              ],
+            ),
+          ),
+
+          // 2. FULLSCREEN BLUR ENTRY GATE
+          // Shown to first-time visitors before OTP verification
+          if (!_isCheckingSession && !_isUnlocked)
+            BrandEntryBlurGate(
+              onVerified: _onVerified,
+            ),
+        ],
       ),
     );
   }
