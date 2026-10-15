@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Sign up - Addcohol Admin Portal</title>
+
+  <!-- Google Fonts: Bricolage Grotesque (headings), Instrument Sans (body), JetBrains Mono (numbers) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* ==========================================================================
+       CSS Reset & Variables (Light Theme default, Dark Theme system-adaptive)
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      /* Light theme (cool grey-blue, deep teal #0b6e5b) */
+      --bg-page: #edf2f7;
+      --bg-card: #ffffff;
+      --border-card: #d8e2ec;
+      --card-shadow: 0 16px 36px -12px rgba(11, 30, 48, 0.08);
+
+      --bg-input: #f8fafc;
+      --border-input: #cfdce8;
+      --border-focus: #0b6e5b;
+      --focus-ring: rgba(11, 110, 91, 0.22);
+
+      --accent: #0b6e5b;
+      --accent-hover: #085647;
+      --accent-text: #ffffff;
+
+      --text-title: #0e1724;
+      --text-sub: #526071;
+      --text-label: #5a6e82;
+      --text-placeholder: #94a3b8;
+      --text-value: #0f1d2e;
+
+      --error-color: #dc2626;
+      --error-bg: #fef2f2;
+      --error-border: #fecaca;
+
+      --radius-input: 10px;
+      --radius-card: 18px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        /* Dark theme (dark blue-grey, mint accent #4fd1b0) */
+        --bg-page: #0b1319;
+        --bg-card: #121d26;
+        --border-card: #1c2e3d;
+        --card-shadow: 0 24px 48px -14px rgba(0, 0, 0, 0.55);
+
+        --bg-input: #0d161e;
+        --border-input: #213545;
+        --border-focus: #4fd1b0;
+        --focus-ring: rgba(79, 209, 176, 0.22);
+
+        --accent: #4fd1b0;
+        --accent-hover: #40ba9c;
+        --accent-text: #091a16;
+
+        --text-title: #f1f5f9;
+        --text-sub: #8da2b5;
+        --text-label: #8ba1b4;
+        --text-placeholder: #3e5366;
+        --text-value: #f8fafc;
+
+        --error-color: #f87171;
+        --error-bg: rgba(239, 68, 68, 0.1);
+        --error-border: rgba(248, 113, 113, 0.35);
+      }
+    }
+
+    body {
+      font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-value);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Container - Max Width approx 26rem */
+    .signup-container {
+      width: 100%;
+      max-width: 26rem;
+      margin: 0 auto;
+    }
+
+    /* Header styling */
+    .header-area {
+      margin-bottom: 1.25rem;
+      padding-left: 0.25rem;
+    }
+
+    .page-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--text-title);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 0.45rem;
+    }
+
+    /* Short accent line under heading */
+    .accent-bar {
+      width: 2.5rem;
+      height: 3.5px;
+      background: var(--accent);
+      border-radius: 4px;
+      margin-bottom: 0.65rem;
+    }
+
+    .page-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-sub);
+      line-height: 1.45;
+      font-weight: 400;
+    }
+
+    /* Main Form Card */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-card);
+      padding: 1.65rem 1.45rem;
+      box-shadow: var(--card-shadow);
+      transition: all 0.25s ease;
+    }
+
+    .form-group {
+      margin-bottom: 1.35rem;
+    }
+
+    .form-group:last-of-type {
+      margin-bottom: 1.55rem;
+    }
+
+    /* Label Styling */
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.5rem;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-label);
+    }
+
+    .counter-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      letter-spacing: 0.04em;
+    }
+
+    /* Input Base Styles */
+    .input-control {
+      width: 100%;
+      height: 3.15rem;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-input);
+      border-radius: var(--radius-input);
+      padding: 0 1rem;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--text-value);
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+    }
+
+    .input-control::placeholder {
+      color: var(--text-placeholder);
+      font-weight: 400;
+    }
+
+    .input-control:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+
+    /* Combined Phone Field Style */
+    .combined-phone-field {
+      display: flex;
+      align-items: stretch;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-input);
+      border-radius: var(--radius-input);
+      overflow: hidden;
+      height: 3.15rem;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .combined-phone-field:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+
+    .country-select-wrapper {
+      position: relative;
+      border-right: 1px solid var(--border-input);
+      flex-shrink: 0;
+    }
+
+    .country-select {
+      height: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background-color: transparent;
+      border: none;
+      padding: 0 1.9rem 0 0.95rem;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-value);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .country-select option {
+      background-color: var(--bg-card);
+      color: var(--text-value);
+    }
+
+    .select-arrow {
+      position: absolute;
+      right: 0.65rem;
+      top: 50%;
+      pointer-events: none;
+      width: 0.5rem;
+      height: 0.5rem;
+      border-right: 2px solid var(--text-label);
+      border-bottom: 2px solid var(--text-label);
+      transform: translateY(-65%) rotate(45deg);
+    }
+
+    .phone-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      height: 100%;
+      padding: 0 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.12rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-align: center;
+      color: var(--text-value);
+      outline: none;
+    }
+
+    .phone-input::placeholder {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-placeholder);
+      letter-spacing: 0.08em;
+    }
+
+    /* Code Input Style */
+    .code-input {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.28rem;
+      font-weight: 700;
+      letter-spacing: 0.38em;
+      text-align: center;
+    }
+
+    .code-input::placeholder {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-placeholder);
+      letter-spacing: 0.38em;
+    }
+
+    /* Error States */
+    .has-error .input-control,
+    .has-error.combined-phone-field {
+      border-color: var(--error-color) !important;
+    }
+
+    .has-error .input-control:focus,
+    .has-error.combined-phone-field:focus-within {
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22) !important;
+    }
+
+    .error-msg {
+      font-size: 0.78rem;
+      color: var(--error-color);
+      margin-top: 0.4rem;
+      font-weight: 500;
+      display: none;
+      line-height: 1.35;
+    }
+
+    .has-error + .error-msg,
+    .error-msg.visible {
+      display: block;
+    }
+
+    /* Primary Submit Button */
+    .btn-submit {
+      width: 100%;
+      height: 3.15rem;
+      background-color: var(--accent);
+      color: var(--accent-text);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border: none;
+      border-radius: var(--radius-input);
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      transition: background-color 0.18s ease, transform 0.1s ease;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-submit:active {
+      transform: scale(0.99);
+    }
+
+    /* Success Card View */
+    .success-card {
+      display: none;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-card);
+      padding: 2rem 1.6rem;
+      box-shadow: var(--card-shadow);
+      text-align: center;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .success-icon-badge {
+      width: 3.25rem;
+      height: 3.25rem;
+      border-radius: 50%;
+      background-color: var(--accent);
+      color: var(--accent-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.6rem;
+      font-weight: bold;
+    }
+
+    .success-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-title);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.35rem;
+    }
+
+    .success-sub {
+      font-size: 0.92rem;
+      color: var(--text-sub);
+      margin-bottom: 1.5rem;
+    }
+
+    .details-box {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-input);
+      border-radius: var(--radius-input);
+      padding: 1.15rem;
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-card);
+      font-size: 0.88rem;
+    }
+
+    .detail-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .detail-label {
+      color: var(--text-label);
+      font-weight: 600;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .detail-val {
+      font-weight: 700;
+      color: var(--text-title);
+    }
+
+    .detail-val.mono {
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-edit {
+      background: transparent;
+      border: 1px solid var(--border-input);
+      color: var(--text-title);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-input);
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.18s ease;
+    }
+
+    .btn-edit:hover {
+      background-color: var(--bg-input);
+    }
+
+    /* Screen width optimization: smooth rendering at 400px and smaller */
+    @media (max-width: 420px) {
+      body {
+        padding: 1rem 0.75rem;
+      }
+      .card {
+        padding: 1.35rem 1.15rem;
+      }
+      .page-title {
+        font-size: 1.95rem;
+      }
+      .phone-input {
+        font-size: 1rem;
+      }
+      .code-input {
+        font-size: 1.15rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="signup-container">
+
+    <!-- Header Section -->
+    <header class="header-area" id="headerArea">
+      <h1 class="page-title">Sign up</h1>
+      <div class="accent-bar" aria-hidden="true"></div>
+      <p class="page-subtitle">Enter your name, phone number and 5 digit admin code.</p>
+    </header>
+
+    <!-- Sign Up Form Card -->
+    <main class="card" id="formCard">
+      <form id="signupForm" novalidate autocomplete="off">
+
+        <!-- 1. Name Field -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="fullName" class="field-label">Name</label>
+          </div>
+          <input
+            type="text"
+            id="fullName"
+            name="fullName"
+            class="input-control"
+            placeholder="Your full name"
+            required
+            aria-required="true"
+            aria-describedby="nameError"
+          />
+          <div class="error-msg" id="nameError" role="alert">Please enter your name (at least 2 letters).</div>
+        </div>
+
+        <!-- 2. Combined Phone Number Field -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="phoneNumber" class="field-label">Phone Number</label>
+          </div>
+
+          <div class="combined-phone-field" id="phoneWrapper">
+            <div class="country-select-wrapper">
+              <select id="countryCode" name="countryCode" class="country-select" aria-label="Country Code">
+                <option value="+91" selected>IN +91</option>
+                <option value="+880">BD +880</option>
+                <option value="+977">NP +977</option>
+                <option value="+94">LK +94</option>
+                <option value="+971">AE +971</option>
+                <option value="+44">UK +44</option>
+                <option value="+1">US +1</option>
+              </select>
+              <div class="select-arrow" aria-hidden="true"></div>
+            </div>
+
+            <input
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              class="phone-input"
+              placeholder="98765 43210"
+              inputmode="numeric"
+              required
+              aria-required="true"
+              aria-describedby="phoneError"
+              autocomplete="tel-national"
+            />
+          </div>
+          <div class="error-msg" id="phoneError" role="alert">Please enter a valid 10-digit number starting with 6, 7, 8 or 9.</div>
+        </div>
+
+        <!-- 3. 5-Digit Code Field -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="adminCode" class="field-label">Code</label>
+            <span class="counter-badge" id="codeCounter" aria-live="polite">0/5</span>
+          </div>
+
+          <input
+            type="text"
+            id="adminCode"
+            name="adminCode"
+            class="input-control code-input"
+            placeholder="_ _ _ _ _"
+            maxlength="5"
+            inputmode="numeric"
+            required
+            aria-required="true"
+            aria-describedby="codeError"
+          />
+          <div class="error-msg" id="codeError" role="alert">Please enter the exact 5-digit code.</div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit" id="submitBtn">
+          Sign up
+        </button>
+      </form>
+    </main>
+
+    <!-- Success Feedback View (Shown on Valid Submit) -->
+    <section class="success-card" id="successCard" aria-live="polite">
+      <div class="success-icon-badge" aria-hidden="true">✓</div>
+      <h2 class="success-title">You're signed up</h2>
+      <p class="success-sub">Your admin credentials and 5-digit code have been verified.</p>
+
+      <div class="details-box">
+        <div class="detail-item">
+          <span class="detail-label">Name</span>
+          <span class="detail-val" id="summaryName">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Phone</span>
+          <span class="detail-val mono" id="summaryPhone">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Admin Code</span>
+          <span class="detail-val mono" id="summaryCode">—</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn-edit" id="editDetailsBtn">
+        ← Edit details
+      </button>
+    </section>
+
+  </div>
+
+  <!-- Vanilla JavaScript Logic -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // DOM Elements
+      const form = document.getElementById('signupForm');
+      const formCard = document.getElementById('formCard');
+      const headerArea = document.getElementById('headerArea');
+      const successCard = document.getElementById('successCard');
+
+      const nameInput = document.getElementById('fullName');
+      const nameError = document.getElementById('nameError');
+
+      const countrySelect = document.getElementById('countryCode');
+      const phoneInput = document.getElementById('phoneNumber');
+      const phoneWrapper = document.getElementById('phoneWrapper');
+      const phoneError = document.getElementById('phoneError');
+
+      const codeInput = document.getElementById('adminCode');
+      const codeCounter = document.getElementById('codeCounter');
+      const codeError = document.getElementById('codeError');
+
+      const summaryName = document.getElementById('summaryName');
+      const summaryPhone = document.getElementById('summaryPhone');
+      const summaryCode = document.getElementById('summaryCode');
+      const editDetailsBtn = document.getElementById('editDetailsBtn');
+
+      let hasAttemptedSubmit = false;
+
+      // 1. Name Validation
+      function validateName() {
+        const val = nameInput.value.trim();
+        const letterRegex = /[a-zA-Z]/g;
+        const letterMatches = val.match(letterRegex);
+        const isValid = letterMatches && letterMatches.length >= 2;
+
+        if (!isValid) {
+          nameInput.classList.add('has-error');
+          nameError.textContent = val.length === 0
+            ? 'Name is required'
+            : 'Please enter at least 2 letters';
+          nameError.classList.add('visible');
+          return false;
+        } else {
+          nameInput.classList.remove('has-error');
+          nameError.classList.remove('visible');
+          return true;
+        }
+      }
+
+      nameInput.addEventListener('blur', () => {
+        if (hasAttemptedSubmit || nameInput.value.trim().length > 0) {
+          validateName();
+        }
+      });
+
+      nameInput.addEventListener('input', () => {
+        if (nameInput.classList.contains('has-error')) {
+          validateName();
+        }
+      });
+
+      // 2. Phone Formatting & Validation
+      function formatAndValidatePhone(showError = false) {
+        const country = countrySelect.value;
+        let rawDigits = phoneInput.value.replace(/\D/g, '');
+
+        if (country === '+91') {
+          rawDigits = rawDigits.slice(0, 10);
+          if (rawDigits.length > 5) {
+            phoneInput.value = rawDigits.slice(0, 5) + ' ' + rawDigits.slice(5);
+          } else {
+            phoneInput.value = rawDigits;
+          }
+        } else {
+          rawDigits = rawDigits.slice(0, 14);
+          phoneInput.value = rawDigits;
+        }
+
+        let isValid = false;
+        let errorText = '';
+
+        if (rawDigits.length === 0) {
+          errorText = 'Phone number is required';
+        } else if (country === '+91') {
+          if (!/^[6-9]/.test(rawDigits)) {
+            errorText = 'Indian numbers must start with 6, 7, 8 or 9';
+          } else if (rawDigits.length !== 10) {
+            errorText = `Exactly 10 digits required (${rawDigits.length}/10)`;
+          } else {
+            isValid = true;
+          }
+        } else {
+          if (rawDigits.length < 6 || rawDigits.length > 14) {
+            errorText = `Number must be between 6 and 14 digits (${rawDigits.length})`;
+          } else {
+            isValid = true;
+          }
+        }
+
+        if (!isValid && showError) {
+          phoneWrapper.classList.add('has-error');
+          phoneError.textContent = errorText;
+          phoneError.classList.add('visible');
+        } else if (isValid) {
+          phoneWrapper.classList.remove('has-error');
+          phoneError.classList.remove('visible');
+        }
+
+        return isValid;
+      }
+
+      phoneInput.addEventListener('input', () => {
+        formatAndValidatePhone(phoneWrapper.classList.contains('has-error'));
+      });
+
+      phoneInput.addEventListener('blur', () => {
+        formatAndValidatePhone(true);
+      });
+
+      countrySelect.addEventListener('change', () => {
+        if (countrySelect.value === '+91') {
+          phoneInput.placeholder = '98765 43210';
+        } else {
+          phoneInput.placeholder = 'Phone number';
+        }
+        formatAndValidatePhone(hasAttemptedSubmit || phoneInput.value.length > 0);
+      });
+
+      // 3. 5-Digit Code Formatting & Validation
+      function formatAndValidateCode(showError = false) {
+        let val = codeInput.value.replace(/\D/g, '').slice(0, 5);
+        codeInput.value = val;
+
+        codeCounter.textContent = `${val.length}/5`;
+
+        let isValid = val.length === 5;
+        let errorText = '';
+
+        if (val.length === 0) {
+          errorText = '5-digit code is required';
+        } else if (val.length !== 5) {
+          errorText = `Code must be exactly 5 digits (${val.length}/5)`;
+        }
+
+        if (!isValid && showError) {
+          codeInput.classList.add('has-error');
+          codeError.textContent = errorText;
+          codeError.classList.add('visible');
+        } else if (isValid) {
+          codeInput.classList.remove('has-error');
+          codeError.classList.remove('visible');
+        }
+
+        return isValid;
+      }
+
+      codeInput.addEventListener('input', () => {
+        formatAndValidateCode(codeInput.classList.contains('has-error'));
+      });
+
+      codeInput.addEventListener('blur', () => {
+        formatAndValidateCode(true);
+      });
+
+      // Form Submission
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        hasAttemptedSubmit = true;
+
+        const isNameValid = validateName();
+        const isPhoneValid = formatAndValidatePhone(true);
+        const isCodeValid = formatAndValidateCode(true);
+
+        if (!isNameValid || !isPhoneValid || !isCodeValid) {
+          if (!isNameValid) {
+            nameInput.focus();
+          } else if (!isPhoneValid) {
+            phoneInput.focus();
+          } else if (!isCodeValid) {
+            codeInput.focus();
+          }
+          return;
+        }
+
+        summaryName.textContent = nameInput.value.trim();
+        summaryPhone.textContent = `${countrySelect.value} ${phoneInput.value.trim()}`;
+        summaryCode.textContent = codeInput.value.trim();
+
+        formCard.style.display = 'none';
+        headerArea.style.display = 'none';
+        successCard.style.display = 'block';
+      });
+
+      // Edit Details button
+      editDetailsBtn.addEventListener('click', () => {
+        successCard.style.display = 'none';
+        headerArea.style.display = 'block';
+        formCard.style.display = 'block';
+        nameInput.focus();
+      });
+    });
+  </script>
+</body>
+</html>
