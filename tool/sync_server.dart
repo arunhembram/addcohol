@@ -12,6 +12,7 @@ void main() async {
   final Map<String, Map<String, dynamic>> customZones = {};
   final Map<String, Map<String, dynamic>> zonePricings = {};
   final Map<String, List<String>> employeeZoneAssignments = {};
+  final Map<String, Map<String, dynamic>> admins = {};
 
   final zonesStorageFile = File('tool/.sync_zones.json');
   if (zonesStorageFile.existsSync()) {
@@ -89,6 +90,32 @@ void main() async {
       employeeStorageFile.writeAsStringSync(jsonEncode(employeeZoneAssignments));
     } catch (e) {
       print('SYNC: Error persisting employee assignments: $e');
+    }
+  }
+
+  final adminStorageFile = File('tool/.sync_admins.json');
+  if (adminStorageFile.existsSync()) {
+    try {
+      final text = adminStorageFile.readAsStringSync();
+      if (text.isNotEmpty) {
+        final decoded = jsonDecode(text) as Map<String, dynamic>;
+        for (final entry in decoded.entries) {
+          if (entry.value is Map<String, dynamic>) {
+            admins[entry.key] = entry.value as Map<String, dynamic>;
+          }
+        }
+        print('SYNC: Loaded ${admins.length} admins from storage');
+      }
+    } catch (e) {
+      print('SYNC: Error loading saved admins: $e');
+    }
+  }
+
+  void saveAdminsToStorage() {
+    try {
+      adminStorageFile.writeAsStringSync(jsonEncode(admins));
+    } catch (e) {
+      print('SYNC: Error persisting admins: $e');
     }
   }
 
@@ -304,6 +331,17 @@ void main() async {
               }
             }
 
+            // 9c. Admin profiles (generated codes & paired profiles)
+            if (data.containsKey('admin') && data['admin'] is Map<String, dynamic>) {
+              final aMap = data['admin'] as Map<String, dynamic>;
+              final aKey = (aMap['display_id'] ?? aMap['id']) as String?;
+              if (aKey != null && aKey.isNotEmpty) {
+                admins[aKey] = aMap;
+                saveAdminsToStorage();
+                print('SYNC: Admin profile registered/updated: ${aMap['full_name']} ($aKey)');
+              }
+            }
+
             // 10. Reset all (for fresh development state)
             if (data.containsKey('resetAll') && data['resetAll'] == true) {
               zoneModes.clear();
@@ -316,10 +354,12 @@ void main() async {
               customZones.clear();
               zonePricings.clear();
               employeeZoneAssignments.clear();
+              admins.clear();
               saveZonesToStorage();
               savePricingToStorage();
               saveEmployeeAssignmentsToStorage();
-              print('SYNC: All distribution, gone states, custom zones, pricing and employee assignments cleared');
+              saveAdminsToStorage();
+              print('SYNC: All distribution, gone states, custom zones, pricing, employee assignments and admins cleared');
             }
           }
         } catch (e) {
@@ -337,6 +377,7 @@ void main() async {
           'customZones': customZones.values.toList(),
           'zonePricings': zonePricings,
           'employeeZoneAssignments': employeeZoneAssignments,
+          'admins': admins.values.toList(),
         });
         request.response
           ..headers.contentType = ContentType.json

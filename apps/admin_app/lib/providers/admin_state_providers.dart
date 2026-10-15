@@ -131,30 +131,13 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
         admin = await _adminRepo.verifyAdminId(cleanId);
       } catch (_) {}
 
-      // Fallback seed admin check (e.g. 10001, 10002)
       if (admin == null) {
-        if (cleanId == '10001') {
-          admin = UserProfile(
-            id: 'admin-10001',
-            email: 'subhasis.ghosh@shopad.local',
-            fullName: 'Subhasis Ghosh',
-            role: UserRole.admin,
-            phoneNumber: '+91 98765 43210',
-            displayId: '10001',
-            isActive: true,
-            createdAt: DateTime.now(),
-          );
-        } else if (cleanId == '10002') {
-          admin = UserProfile(
-            id: 'admin-10002',
-            email: 'priya.sen@shopad.local',
-            fullName: 'Priya Sen',
-            role: UserRole.admin,
-            phoneNumber: '+91 98300 11223',
-            displayId: '10002',
-            isActive: true,
-            createdAt: DateTime.now(),
-          );
+        final managed = CanonicalZones.getManagedAdmins();
+        for (final m in managed) {
+          if (m.displayId == cleanId && m.isActive) {
+            admin = m;
+            break;
+          }
         }
       }
 
@@ -162,6 +145,14 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
         state = state.copyWith(
           isLoading: false,
           errorMessage: 'No admin account found with ID $cleanId. Please sign up first.',
+        );
+        return false;
+      }
+
+      if (admin.fullName.trim().isEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Code $cleanId has not been registered yet. Please use the "Sign up" tab to link your name.',
         );
         return false;
       }
@@ -195,18 +186,10 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
       final cleanCode = code.trim();
       final fullName = '${firstName.trim()} ${lastName.trim()}';
 
-      final admin = UserProfile(
-        id: 'admin-$cleanCode',
-        email: '${firstName.trim().toLowerCase()}.${lastName.trim().toLowerCase()}@shopad.local',
+      final admin = CanonicalZones.pairAdminCode(
+        cleanCode,
         fullName: fullName,
-        role: UserRole.admin,
         phoneNumber: phoneNumber.trim(),
-        displayId: cleanCode,
-        isActive: true,
-        createdAt: DateTime.now(),
-        metadata: const {
-          'admin_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
-        },
       );
 
       state = state.copyWith(

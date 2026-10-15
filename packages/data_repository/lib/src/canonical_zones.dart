@@ -1341,6 +1341,142 @@ class CanonicalZones {
     }
   }
 
+  static int _adminDisplayIdCounter = 10004;
+
+  static final List<UserProfile> _managedAdmins = [
+    UserProfile(
+      id: 'admin-10001',
+      email: 'subhasis.sen@shopad.local',
+      fullName: 'Subhasis Sen',
+      role: UserRole.admin,
+      phoneNumber: '+91 98765 43210',
+      displayId: '10001',
+      isActive: true,
+      metadata: const {
+        'admin_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
+      },
+      createdAt: DateTime(2026, 1, 1),
+    ),
+    UserProfile(
+      id: 'admin-10002',
+      email: 'priya.mukherjee@shopad.local',
+      fullName: 'Priya Mukherjee',
+      role: UserRole.admin,
+      phoneNumber: '+91 98300 12345',
+      displayId: '10002',
+      isActive: true,
+      metadata: const {
+        'admin_zones': ['z-howrah-industrial'],
+      },
+      createdAt: DateTime(2026, 1, 10),
+    ),
+    UserProfile(
+      id: 'admin-10003',
+      email: 'debanjan.sen@shopad.local',
+      fullName: 'Debanjan Sen',
+      role: UserRole.admin,
+      phoneNumber: '+91 98303 33445',
+      displayId: '10003',
+      isActive: true,
+      metadata: const {
+        'admin_zones': ['z-kolkata-central'],
+      },
+      createdAt: DateTime(2026, 1, 20),
+    ),
+  ];
+
+  /// Get list of managed admins (returns unmodifiable copy)
+  static List<UserProfile> getManagedAdmins() {
+    return List.unmodifiable(_managedAdmins.where((a) => a.isActive));
+  }
+
+  /// Create a new unclaimed Admin Code (e.g. 10004) without a name
+  static UserProfile createAdminCode({bool syncRemote = true}) {
+    final code = (_adminDisplayIdCounter++).toString();
+    final newAdmin = UserProfile(
+      id: 'admin-code-$code',
+      email: '',
+      fullName: '',
+      role: UserRole.admin,
+      phoneNumber: '',
+      displayId: code,
+      isActive: true,
+      metadata: const {
+        'admin_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
+      },
+      createdAt: DateTime.now(),
+    );
+    _managedAdmins.insert(0, newAdmin);
+    zonesRevision.value++;
+    if (syncRemote) {
+      unawaited(DistributionSyncService.pushAdmin(newAdmin));
+    }
+    return newAdmin;
+  }
+
+  /// Pair/bind an admin code with the admin's name and phone number upon login/signup
+  static UserProfile pairAdminCode(
+    String code, {
+    required String fullName,
+    required String phoneNumber,
+    bool syncRemote = true,
+  }) {
+    final cleanCode = code.trim();
+    final idx = _managedAdmins.indexWhere((a) => a.displayId == cleanCode || a.id == cleanCode || a.id == 'admin-$cleanCode');
+    UserProfile updated;
+    if (idx >= 0) {
+      final existing = _managedAdmins[idx];
+      updated = existing.copyWith(
+        fullName: fullName.trim(),
+        phoneNumber: phoneNumber.trim(),
+        email: '${fullName.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@shopad.local',
+      );
+      _managedAdmins[idx] = updated;
+    } else {
+      updated = UserProfile(
+        id: 'admin-$cleanCode',
+        email: '${fullName.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@shopad.local',
+        fullName: fullName.trim(),
+        role: UserRole.admin,
+        phoneNumber: phoneNumber.trim(),
+        displayId: cleanCode,
+        isActive: true,
+        metadata: const {
+          'admin_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
+        },
+        createdAt: DateTime.now(),
+      );
+      _managedAdmins.insert(0, updated);
+    }
+    zonesRevision.value++;
+    if (syncRemote) {
+      unawaited(DistributionSyncService.pushAdmin(updated));
+    }
+    return updated;
+  }
+
+  /// Synchronize remote admins received from sync server or database
+  static void syncRemoteAdmins(List<UserProfile> admins) {
+    bool changed = false;
+    for (final remote in admins) {
+      final idx = _managedAdmins.indexWhere((a) => a.displayId == remote.displayId || a.id == remote.id);
+      if (idx >= 0) {
+        if (_managedAdmins[idx].fullName != remote.fullName ||
+            _managedAdmins[idx].phoneNumber != remote.phoneNumber ||
+            _managedAdmins[idx].isActive != remote.isActive) {
+          _managedAdmins[idx] = remote;
+          changed = true;
+        }
+      } else {
+        _managedAdmins.add(remote);
+        changed = true;
+      }
+    }
+    if (changed) {
+      zonesRevision.value++;
+    }
+  }
+
   /// Get employee IDs assigned to a specific zone
   static List<String> getZoneAssignedEmployeeIds(String zoneId) {
     final result = <String>{};

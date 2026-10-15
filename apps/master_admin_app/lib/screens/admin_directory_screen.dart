@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:data_repository/data_repository.dart';
 import 'package:design_system/design_system.dart';
 import 'package:domain_models/domain_models.dart';
@@ -17,6 +18,32 @@ class AdminDirectoryScreen extends ConsumerStatefulWidget {
 
 class _AdminDirectoryScreenState extends ConsumerState<AdminDirectoryScreen> {
   bool _isCreatingCode = false;
+  Timer? _syncTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    CanonicalZones.zonesRevision.addListener(_onZonesRevisionChanged);
+    _syncTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+      final updated = await DistributionSyncService.fetchRemoteState();
+      if (updated && mounted) {
+        ref.invalidate(adminsListProvider);
+      }
+    });
+  }
+
+  void _onZonesRevisionChanged() {
+    if (mounted) {
+      ref.invalidate(adminsListProvider);
+    }
+  }
+
+  @override
+  void dispose() {
+    CanonicalZones.zonesRevision.removeListener(_onZonesRevisionChanged);
+    _syncTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _createNewAdminCode() async {
     setState(() => _isCreatingCode = true);

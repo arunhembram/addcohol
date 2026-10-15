@@ -268,6 +268,14 @@ class SupabaseAdminRepository implements IAdminRepository {
       } catch (_) {}
     }
 
+    // Check Canonical managed admins
+    final managed = CanonicalZones.getManagedAdmins();
+    for (final m in managed) {
+      if (m.displayId == cleanId && m.isActive) {
+        return m;
+      }
+    }
+
     // Check mock admins
     final admin = _mockAdmins.firstWhere(
       (a) => a.displayId == cleanId && a.isActive,

@@ -142,7 +142,8 @@ class SupabaseMasterAdminRepository implements IMasterAdminRepository {
 
   int _displayIdCounter = 10003;
 
-  SupabaseMasterAdminRepository({required this.supabaseManager});
+  SupabaseMasterAdminRepository({SupabaseManager? supabaseManager})
+      : supabaseManager = supabaseManager ?? SupabaseManager(config: AppConfig.fromEnvironment());
 
   bool get _isLive => supabaseManager.client != null;
 
@@ -421,33 +422,23 @@ class SupabaseMasterAdminRepository implements IMasterAdminRepository {
   @override
   Future<List<UserProfile>> getAdmins() async {
     if (!_isLive) {
-      return List.unmodifiable(_mockAdmins);
+      return CanonicalZones.getManagedAdmins();
     }
 
     try {
       final client = supabaseManager.client!;
       final res = await client.from('profiles').select().eq('role', 'admin').order('full_name');
-      return (res as List).map((row) => UserProfile.fromJson(row as Map<String, dynamic>)).toList();
+      final dbAdmins = (res as List).map((row) => UserProfile.fromJson(row as Map<String, dynamic>)).toList();
+      if (dbAdmins.isNotEmpty) return dbAdmins;
+      return CanonicalZones.getManagedAdmins();
     } catch (_) {
-      return List.unmodifiable(_mockAdmins);
+      return CanonicalZones.getManagedAdmins();
     }
   }
 
   @override
   Future<UserProfile> createAdminCode() async {
-    final displayId = (_displayIdCounter++).toString();
-    final newAdmin = UserProfile(
-      id: 'admin-code-$displayId',
-      email: '',
-      fullName: '',
-      role: UserRole.admin,
-      phoneNumber: '',
-      displayId: displayId,
-      isActive: true,
-      createdAt: DateTime.now(),
-    );
-
-    _mockAdmins.insert(0, newAdmin);
+    final newAdmin = CanonicalZones.createAdminCode();
 
     _mockAuditLogs.insert(
       0,
@@ -458,7 +449,7 @@ class SupabaseMasterAdminRepository implements IMasterAdminRepository {
         action: 'CREATE_ADMIN_CODE',
         entityName: 'profiles',
         entityId: newAdmin.id,
-        details: {'display_id': displayId, 'status': 'pending_activation'},
+        details: {'display_id': newAdmin.displayId, 'status': 'pending_activation'},
         createdAt: DateTime.now(),
       ),
     );
@@ -468,17 +459,8 @@ class SupabaseMasterAdminRepository implements IMasterAdminRepository {
 
   @override
   Future<UserProfile> pairAdminCode(String code, {required String fullName, required String phoneNumber}) async {
-    final idx = _mockAdmins.indexWhere((a) => a.displayId == code);
-    if (idx >= 0) {
-      final updated = _mockAdmins[idx].copyWith(
-        fullName: fullName,
-        phoneNumber: phoneNumber,
-        email: '${fullName.toLowerCase().replaceAll(' ', '.')}@shopad.com',
-      );
-      _mockAdmins[idx] = updated;
-      return updated;
-    }
-    throw const ValidationException('Admin Code not found');
+    final updated = CanonicalZones.pairAdminCode(code, fullName: fullName, phoneNumber: phoneNumber);
+    return updated;
   }
 
   @override

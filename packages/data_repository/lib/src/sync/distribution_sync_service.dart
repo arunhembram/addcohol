@@ -203,6 +203,18 @@ class DistributionSyncService {
           }
         }
 
+        // 8. Sync managed admins created by Master Admin or paired by Admin App
+        if (data['admins'] is List) {
+          final adminsJson = data['admins'] as List;
+          final remoteAdmins = adminsJson
+              .whereType<Map<String, dynamic>>()
+              .map((j) => UserProfile.fromJson(j))
+              .toList();
+          if (remoteAdmins.isNotEmpty) {
+            CanonicalZones.syncRemoteAdmins(remoteAdmins);
+          }
+        }
+
         _lastSyncTime = DateTime.now();
         return true;
       }
@@ -466,6 +478,29 @@ class DistributionSyncService {
             body: jsonEncode({
               'zoneId': zoneId,
               'zonePricing': config.toJson(),
+            }),
+          )
+          .timeout(const Duration(milliseconds: 1500));
+    } catch (_) {}
+  }
+
+  /// Push admin profile (newly generated code or paired admin) to sync server
+  static Future<void> pushAdmin(UserProfile admin) async {
+    final client = _supabaseClient;
+    if (client != null && admin.fullName.isNotEmpty) {
+      try {
+        await client.from('profiles').upsert(admin.toJson()).timeout(const Duration(seconds: 3));
+      } catch (_) {}
+    }
+
+    if (!isSyncEnabled) return;
+    try {
+      await http
+          .post(
+            Uri.parse(_syncServerUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'admin': admin.toJson(),
             }),
           )
           .timeout(const Duration(milliseconds: 1500));
