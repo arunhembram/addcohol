@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign up - Addcohol Employee Portal</title>
+  <title>Employee Portal - Addcohol</title>
 
   <!-- Google Fonts: Bricolage Grotesque (headings), Instrument Sans (body), JetBrains Mono (numbers) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -38,6 +38,7 @@
       --accent: #0b6e5b;
       --accent-hover: #085647;
       --accent-text: #ffffff;
+      --accent-soft: rgba(11, 110, 91, 0.12);
 
       --text-title: #0e1724;
       --text-sub: #526071;
@@ -48,6 +49,7 @@
       --error-color: #dc2626;
       --error-bg: #fef2f2;
       --error-border: #fecaca;
+      --success-green: #10b981;
 
       --radius-input: 10px;
       --radius-card: 18px;
@@ -55,7 +57,7 @@
 
     @media (prefers-color-scheme: dark) {
       :root {
-        /* Dark theme (dark blue-grey, mint accent #4fd1b0) - Exactly matching screenshot */
+        /* Dark theme (dark blue-grey, mint accent #4fd1b0) */
         --bg-page: #0b1319;
         --bg-card: #121d26;
         --border-card: #1c2e3d;
@@ -69,6 +71,7 @@
         --accent: #4fd1b0;
         --accent-hover: #40ba9c;
         --accent-text: #091a16;
+        --accent-soft: rgba(79, 209, 176, 0.15);
 
         --text-title: #f1f5f9;
         --text-sub: #8da2b5;
@@ -79,6 +82,7 @@
         --error-color: #f87171;
         --error-bg: rgba(239, 68, 68, 0.1);
         --error-border: rgba(248, 113, 113, 0.35);
+        --success-green: #34d399;
       }
     }
 
@@ -92,18 +96,24 @@
       justify-content: center;
       padding: 1.5rem 1rem;
       -webkit-font-smoothing: antialiased;
+      transition: background-color 0.2s ease;
     }
 
     /* Container - Max Width approx 26rem */
-    .signup-container {
+    .portal-container {
       width: 100%;
       max-width: 26rem;
       margin: 0 auto;
+      transition: max-width 0.3s ease;
+    }
+
+    .portal-container.wide-mode {
+      max-width: 46rem;
     }
 
     /* Header styling */
     .header-area {
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.15rem;
       padding-left: 0.25rem;
     }
 
@@ -133,6 +143,46 @@
       font-weight: 400;
     }
 
+    /* Switch / Tab Toggle (Sign up | Log in) */
+    .auth-toggle-wrapper {
+      margin-bottom: 1.25rem;
+    }
+
+    .auth-toggle {
+      display: flex;
+      background: var(--bg-input);
+      border: 1px solid var(--border-input);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toggle-btn:hover {
+      color: var(--text-title);
+    }
+
+    .toggle-btn.active {
+      background: var(--bg-card);
+      color: var(--accent);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--border-card);
+    }
+
     /* Main Form Card */
     .card {
       background-color: var(--bg-card);
@@ -148,20 +198,18 @@
     }
 
     .form-group:last-of-type {
-      margin-bottom: 1.55rem;
+      margin-bottom: 1.65rem;
     }
 
-    /* Label Styling */
     .label-row {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
       margin-bottom: 0.5rem;
     }
 
     .field-label {
-      display: block;
-      font-size: 0.72rem;
+      font-size: 0.76rem;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -173,20 +221,23 @@
       font-size: 0.78rem;
       font-weight: 600;
       color: var(--text-sub);
-      letter-spacing: 0.04em;
+      background-color: var(--bg-input);
+      padding: 2px 7px;
+      border-radius: 5px;
+      border: 1px solid var(--border-input);
     }
 
-    /* Input Base Styles */
+    /* Standard Text & Code Input Control */
     .input-control {
       width: 100%;
       height: 3.15rem;
       background-color: var(--bg-input);
-      border: 1px solid var(--border-input);
+      border: 1.5px solid var(--border-input);
       border-radius: var(--radius-input);
-      padding: 0 1rem;
+      color: var(--text-value);
       font-family: 'Instrument Sans', sans-serif;
       font-size: 1rem;
-      color: var(--text-value);
+      padding: 0 1rem;
       outline: none;
       transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
     }
@@ -199,78 +250,77 @@
     .input-control:focus {
       border-color: var(--border-focus);
       box-shadow: 0 0 0 3px var(--focus-ring);
+      background-color: var(--bg-card);
     }
 
-    /* Combined Phone Field Style (One rounded border style with visible focus ring) */
+    /* Combined Phone Field Container */
     .combined-phone-field {
       display: flex;
-      align-items: stretch;
-      background-color: var(--bg-input);
-      border: 1px solid var(--border-input);
-      border-radius: var(--radius-input);
-      overflow: hidden;
+      align-items: center;
+      width: 100%;
       height: 3.15rem;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+      background-color: var(--bg-input);
+      border: 1.5px solid var(--border-input);
+      border-radius: var(--radius-input);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+      overflow: hidden;
     }
 
     .combined-phone-field:focus-within {
       border-color: var(--border-focus);
       box-shadow: 0 0 0 3px var(--focus-ring);
+      background-color: var(--bg-card);
     }
 
     .country-select-wrapper {
       position: relative;
-      border-right: 1px solid var(--border-input);
+      display: flex;
+      align-items: center;
+      height: 100%;
+      border-right: 1.5px solid var(--border-input);
+      background-color: var(--bg-input);
       flex-shrink: 0;
     }
 
     .country-select {
-      height: 100%;
       appearance: none;
       -webkit-appearance: none;
-      background-color: transparent;
+      background: transparent;
       border: none;
-      padding: 0 1.9rem 0 0.95rem;
+      outline: none;
+      height: 100%;
+      padding: 0 1.9rem 0 0.85rem;
       font-family: 'Instrument Sans', sans-serif;
-      font-size: 0.88rem;
+      font-size: 0.92rem;
       font-weight: 600;
       color: var(--text-value);
       cursor: pointer;
-      outline: none;
     }
 
-    .country-select option {
-      background-color: var(--bg-card);
-      color: var(--text-value);
-    }
-
-    /* Custom dropdown chevron arrow */
     .select-arrow {
       position: absolute;
       right: 0.65rem;
-      top: 50%;
-      transform: translateY(-50%);
       pointer-events: none;
       width: 0.5rem;
       height: 0.5rem;
       border-right: 2px solid var(--text-label);
       border-bottom: 2px solid var(--text-label);
-      transform: translateY(-65%) rotate(45deg);
+      transform: rotate(45deg) translateY(-2px);
     }
 
     .phone-input {
       flex: 1;
-      border: none;
-      background: transparent;
       height: 100%;
-      padding: 0 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.12rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-align: center;
-      color: var(--text-value);
+      background: transparent;
+      border: none;
       outline: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.08rem;
+      font-weight: 500;
+      color: var(--text-value);
+      text-align: center;
+      letter-spacing: 0.08em;
+      padding: 0 0.75rem;
     }
 
     .phone-input::placeholder {
@@ -279,24 +329,25 @@
       letter-spacing: 0.08em;
     }
 
-    /* Code Input Style */
+    /* 5-Digit Code Input Specific Styling */
     .code-input {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 1.28rem;
-      font-weight: 700;
-      letter-spacing: 0.38em;
+      font-size: 1.25rem;
+      font-weight: 600;
       text-align: center;
+      letter-spacing: 0.22em;
     }
 
     .code-input::placeholder {
       font-family: 'JetBrains Mono', monospace;
       color: var(--text-placeholder);
-      letter-spacing: 0.38em;
+      letter-spacing: 0.22em;
     }
 
-    /* Error States */
-    .has-error .input-control,
-    .has-error.combined-phone-field {
+    /* Inline Validation & Error Styles */
+    .has-error,
+    .has-error.combined-phone-field,
+    .input-control.has-error {
       border-color: var(--error-color) !important;
     }
 
@@ -344,7 +395,57 @@
       transform: scale(0.99);
     }
 
-    /* Success Card View */
+    .form-hint {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      margin-top: 1rem;
+    }
+
+    .form-hint a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .form-hint a:hover {
+      text-decoration: underline;
+    }
+
+    /* Demo Code Badge helper */
+    .demo-hint-box {
+      margin-top: 1.15rem;
+      padding: 0.75rem 0.9rem;
+      background: var(--accent-soft);
+      border: 1px dashed var(--accent);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-title);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .demo-hint-box span {
+      font-size: 0.76rem;
+      color: var(--text-sub);
+    }
+
+    .demo-code-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      background: var(--bg-card);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--border-card);
+      cursor: pointer;
+      color: var(--accent);
+    }
+
+    /* ==========================================================================
+       Success Card View
+       ========================================================================== */
     .success-card {
       display: none;
       background-color: var(--bg-card);
@@ -431,6 +532,12 @@
       letter-spacing: 0.05em;
     }
 
+    .btn-action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
     .btn-edit {
       background: transparent;
       border: 1px solid var(--border-input);
@@ -447,6 +554,272 @@
 
     .btn-edit:hover {
       background-color: var(--bg-input);
+    }
+
+    /* ==========================================================================
+       Employee Live Map View (Shown after login)
+       ========================================================================== */
+    .map-view-container {
+      display: none;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-card);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .map-nav-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-card);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-card);
+    }
+
+    .map-user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .user-avatar-pill {
+      width: 2.6rem;
+      height: 2.6rem;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--accent-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      font-family: 'Bricolage Grotesque', sans-serif;
+    }
+
+    .user-greeting {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 1.18rem;
+      font-weight: 800;
+      color: var(--text-title);
+      line-height: 1.2;
+    }
+
+    .user-meta-tag {
+      font-size: 0.76rem;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 2px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success-green);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+      70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .btn-logout {
+      background: var(--bg-input);
+      border: 1px solid var(--border-input);
+      color: var(--text-sub);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-logout:hover {
+      color: var(--error-color);
+      border-color: var(--error-border);
+      background-color: var(--error-bg);
+    }
+
+    /* Simulated Interactive Map Display */
+    .simulated-map {
+      position: relative;
+      width: 100%;
+      height: 330px;
+      background: #192734;
+      overflow: hidden;
+    }
+
+    /* Map SVG Background */
+    .map-canvas-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-overlay-badge {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(18, 29, 38, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      padding: 0.5rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .map-controls {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .map-btn {
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 8px;
+      background: rgba(18, 29, 38, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-weight: bold;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: background 0.2s;
+    }
+
+    .map-btn:hover {
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+
+    /* Floating Delivery Task Drawer */
+    .delivery-drawer {
+      padding: 1.25rem 1.4rem;
+      background-color: var(--bg-card);
+    }
+
+    .task-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.65rem;
+    }
+
+    .task-status-chip {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.74rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .task-distance {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-title);
+    }
+
+    .task-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-title);
+      margin-bottom: 0.3rem;
+    }
+
+    .task-address {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+      line-height: 1.4;
+      margin-bottom: 1.15rem;
+    }
+
+    .task-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .action-btn-secondary {
+      background: var(--bg-input);
+      border: 1px solid var(--border-input);
+      color: var(--text-title);
+      padding: 0.7rem 0.85rem;
+      border-radius: var(--radius-input);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: background 0.18s;
+    }
+
+    .action-btn-secondary:hover {
+      background: var(--border-input);
+    }
+
+    .action-btn-primary {
+      background: var(--accent);
+      color: var(--accent-text);
+      border: none;
+      padding: 0.7rem 0.85rem;
+      border-radius: var(--radius-input);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: background 0.18s;
+    }
+
+    .action-btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .app-route-link {
+      display: block;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 0.75rem;
+    }
+
+    .app-route-link:hover {
+      text-decoration: underline;
     }
 
     /* Screen width optimization: smooth rendering at 400px and smaller */
@@ -466,26 +839,40 @@
       .code-input {
         font-size: 1.15rem;
       }
+      .simulated-map {
+        height: 270px;
+      }
+      .task-actions {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="signup-container">
+  <div class="portal-container" id="portalContainer">
 
     <!-- Header Section -->
     <header class="header-area" id="headerArea">
-      <h1 class="page-title">Sign up</h1>
+      <h1 class="page-title" id="pageTitle">Sign up</h1>
       <div class="accent-bar" aria-hidden="true"></div>
-      <p class="page-subtitle">Enter your name, phone number and 5 digit code.</p>
+      <p class="page-subtitle" id="pageSubtitle">Enter your name, phone number and 5 digit code.</p>
     </header>
 
-    <!-- Sign Up Form Card -->
-    <main class="card" id="formCard">
-      <form id="signupForm" novalidate autocomplete="off">
+    <!-- Switch / Tabs: [Sign up | Log in] -->
+    <div class="auth-toggle-wrapper" id="authToggleArea">
+      <div class="auth-toggle" role="tablist" aria-label="Authentication Type">
+        <button type="button" class="toggle-btn active" id="tabSignup" role="tab" aria-selected="true">Sign up</button>
+        <button type="button" class="toggle-btn" id="tabLogin" role="tab" aria-selected="false">Log in</button>
+      </div>
+    </div>
 
-        <!-- 1. Name Field -->
-        <div class="form-group">
+    <!-- Main Auth Card -->
+    <main class="card" id="formCard">
+      <form id="authForm" novalidate autocomplete="off">
+
+        <!-- 1. Name Field (Hidden in Login Mode) -->
+        <div class="form-group" id="nameGroup">
           <div class="label-row">
             <label for="fullName" class="field-label">Name</label>
           </div>
@@ -502,8 +889,8 @@
           <div class="error-msg" id="nameError" role="alert">Please enter your name (at least 2 letters).</div>
         </div>
 
-        <!-- 2. Combined Phone Number Field -->
-        <div class="form-group">
+        <!-- 2. Combined Phone Number Field (Hidden in Login Mode) -->
+        <div class="form-group" id="phoneGroup">
           <div class="label-row">
             <label for="phoneNumber" class="field-label">Phone Number</label>
           </div>
@@ -538,10 +925,10 @@
           <div class="error-msg" id="phoneError" role="alert">Please enter a valid 10-digit number starting with 6, 7, 8 or 9.</div>
         </div>
 
-        <!-- 3. 5-Digit Code Field -->
-        <div class="form-group">
+        <!-- 3. 5-Digit Code Field (Always Visible) -->
+        <div class="form-group" id="codeGroup">
           <div class="label-row">
-            <label for="employeeCode" class="field-label">Code</label>
+            <label for="employeeCode" class="field-label" id="codeLabel">Code</label>
             <span class="counter-badge" id="codeCounter" aria-live="polite">0/5</span>
           </div>
 
@@ -564,10 +951,22 @@
         <button type="submit" class="btn-submit" id="submitBtn">
           Sign up
         </button>
+
+        <!-- Switch Link / Hint -->
+        <p class="form-hint" id="switchHint">
+          Already have an employee code? <a id="switchLink">Log in</a>
+        </p>
+
+        <!-- Quick Demo Hint (Shows existing seed code) -->
+        <div class="demo-hint-box" id="demoHintBox">
+          <span>Demo employee code:</span>
+          <span class="demo-code-pill" id="demoCodePill" title="Click to autofill">20001</span>
+        </div>
+
       </form>
     </main>
 
-    <!-- Success Feedback View (Shown on Valid Submit) -->
+    <!-- Success Feedback View (Shown on Valid Sign up) -->
     <section class="success-card" id="successCard" aria-live="polite">
       <div class="success-icon-badge" aria-hidden="true">✓</div>
       <h2 class="success-title">You're signed up</h2>
@@ -588,9 +987,135 @@
         </div>
       </div>
 
-      <button type="button" class="btn-edit" id="editDetailsBtn">
-        ← Edit details
-      </button>
+      <div class="btn-action-group">
+        <button type="button" class="btn-submit" id="proceedToMapBtn">
+          Open Employee Map →
+        </button>
+        <button type="button" class="btn-edit" id="editDetailsBtn">
+          ← Edit details
+        </button>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         Employee Live Map View (Shown after login)
+         ========================================================================== -->
+    <section class="map-view-container" id="mapViewContainer" aria-label="Employee Map Screen">
+      <!-- Map Navigation Bar -->
+      <div class="map-nav-header">
+        <div class="map-user-info">
+          <div class="user-avatar-pill" id="userAvatar">R</div>
+          <div>
+            <div class="user-greeting" id="mapGreeting">Welcome, Rahul!</div>
+            <div class="user-meta-tag">
+              <span class="status-dot"></span>
+              <span id="userStatusText">On Duty • ID #20001</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-logout" id="logoutBtn" title="Log out from employee map">
+          Log out
+        </button>
+      </div>
+
+      <!-- Simulated Interactive GPS Map Canvas -->
+      <div class="simulated-map" id="mapDisplayArea">
+        <svg class="map-canvas-svg" viewBox="0 0 500 330" xmlns="http://www.w3.org/2000/svg">
+          <!-- Dark/Modern Map Base -->
+          <rect width="500" height="330" fill="#13222f" />
+          
+          <!-- Park / Green Area -->
+          <path d="M 30,20 Q 90,5 140,40 T 180,120 Q 110,160 50,110 Z" fill="#1b3834" opacity="0.75" />
+          <path d="M 320,180 Q 420,170 470,220 T 420,310 Q 330,320 300,260 Z" fill="#1b3834" opacity="0.65" />
+
+          <!-- Water Canal -->
+          <path d="M 0,260 C 120,240 200,290 320,270 C 400,250 460,280 500,290" fill="none" stroke="#1d4052" stroke-width="18" stroke-linecap="round" />
+
+          <!-- Street Grid Network -->
+          <g stroke="#263d50" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="20" y1="80" x2="480" y2="80" />
+            <line x1="20" y1="180" x2="480" y2="180" />
+            <line x1="120" y1="20" x2="120" y2="310" />
+            <line x1="260" y1="20" x2="260" y2="310" />
+            <line x1="390" y1="20" x2="390" y2="310" />
+            <line x1="60" y1="20" x2="450" y2="290" stroke-width="4" stroke="#213545" />
+          </g>
+
+          <!-- Main Avenues -->
+          <g stroke="#37556e" stroke-width="8" stroke-linecap="round">
+            <path d="M 30,130 Q 150,130 260,100 T 470,120" fill="none" />
+            <path d="M 190,30 L 190,300" fill="none" />
+          </g>
+
+          <!-- Active Delivery Route (Pulsing dashed mint/teal line) -->
+          <path d="M 120,180 L 190,180 L 190,100 L 260,100 L 320,100 L 350,130" 
+                fill="none" 
+                stroke="#4fd1b0" 
+                stroke-width="5" 
+                stroke-dasharray="8 6" 
+                stroke-linecap="round" />
+
+          <!-- Current Employee Location Pin (Blue with ripple) -->
+          <g transform="translate(120, 180)">
+            <circle r="22" fill="#4fd1b0" opacity="0.25">
+              <animate attributeName="r" values="10;28;10" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <circle r="10" fill="#0b6e5b" stroke="#ffffff" stroke-width="2.5" />
+            <circle r="4" fill="#ffffff" />
+            <text x="0" y="24" fill="#f1f5f9" font-size="10" font-family="'Instrument Sans', sans-serif" font-weight="700" text-anchor="middle">You are here</text>
+          </g>
+
+          <!-- Target Drop-Off Destination Pin (Orange/Red Flag) -->
+          <g transform="translate(350, 130)">
+            <circle r="16" fill="#ef4444" opacity="0.2">
+              <animate attributeName="r" values="8;20;8" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <path d="M 0,-18 C -7,-18 -12,-13 -12,-6 C -12,4 0,16 0,16 C 0,16 12,4 12,-6 C 12,-13 7,-18 0,-18 Z" fill="#ef4444" stroke="#ffffff" stroke-width="2" />
+            <circle cx="0" cy="-6" r="3.5" fill="#ffffff" />
+            <rect x="-35" y="-34" width="70" height="15" rx="4" fill="#121d26" stroke="#ef4444" stroke-width="1" />
+            <text x="0" y="-23" fill="#ffffff" font-size="8.5" font-family="'JetBrains Mono', monospace" font-weight="700" text-anchor="middle">Order #4829</text>
+          </g>
+        </svg>
+
+        <!-- Floating Live GPS Badge -->
+        <div class="map-overlay-badge">
+          <span class="status-dot"></span>
+          <span><strong>GPS Live:</strong> Salt Lake Sector V • High Accuracy</span>
+        </div>
+
+        <!-- Map Control Buttons -->
+        <div class="map-controls">
+          <button type="button" class="map-btn" id="btnZoomIn" title="Zoom in">+</button>
+          <button type="button" class="map-btn" id="btnZoomOut" title="Zoom out">−</button>
+          <button type="button" class="map-btn" id="btnRecenter" title="Recenter Location">⌖</button>
+        </div>
+      </div>
+
+      <!-- Live Delivery Task Drawer -->
+      <div class="delivery-drawer">
+        <div class="task-badge-row">
+          <span class="task-status-chip">Current Assignment</span>
+          <span class="task-distance">1.2 km away • ETA 6 mins</span>
+        </div>
+        <h3 class="task-title" id="deliveryCustomerName">Delivery to Priya Sen</h3>
+        <p class="task-address" id="deliveryAddress">
+          Tower 3, Block EP & GP, Sector V, Bidhannagar, Kolkata 700091
+        </p>
+
+        <div class="task-actions">
+          <button type="button" class="action-btn-secondary" id="btnCallCustomer">
+            📞 Call Client
+          </button>
+          <button type="button" class="action-btn-primary" id="btnCompleteHandover">
+            ✓ Handover Done
+          </button>
+        </div>
+
+        <a href="index.html#/map" class="app-route-link" id="flutterAppLink">
+          Open in Fullscreen Employee Map App →
+        </a>
+      </div>
     </section>
 
   </div>
@@ -598,11 +1123,85 @@
   <!-- Vanilla JavaScript Logic -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // -------------------------------------------------------------
+      // Seed Data & Persistent User Store
+      // -------------------------------------------------------------
+      const SEED_EMPLOYEES = {
+        '20001': {
+          fullName: 'Rahul Sharma',
+          firstName: 'Rahul',
+          phone: '+91 98765 43210',
+          code: '20001',
+          role: 'Field Delivery Lead',
+          zone: 'Zone 3 - Salt Lake Sector V'
+        },
+        '20002': {
+          fullName: 'Anik Das',
+          firstName: 'Anik',
+          phone: '+91 98311 22334',
+          code: '20002',
+          role: 'Operations Specialist',
+          zone: 'Zone 1 - Park Street'
+        },
+        '20003': {
+          fullName: 'Pooja Roy',
+          firstName: 'Pooja',
+          phone: '+91 97488 55667',
+          code: '20003',
+          role: 'Logistics Courier',
+          zone: 'Zone 2 - New Town'
+        }
+      };
+
+      // Helper to retrieve employee profile by 5-digit code
+      function getEmployeeByCode(code) {
+        // First check localStorage for dynamically registered users
+        try {
+          const localData = localStorage.getItem('addcohol_employee_' + code);
+          if (localData) {
+            return JSON.parse(localData);
+          }
+        } catch (e) {
+          console.warn('LocalStorage error:', e);
+        }
+        // Fallback to seed data
+        return SEED_EMPLOYEES[code] || null;
+      }
+
+      // Helper to save new employee profile
+      function saveEmployeeProfile(data) {
+        try {
+          localStorage.setItem('addcohol_employee_' + data.code, JSON.stringify(data));
+        } catch (e) {
+          console.warn('LocalStorage save error:', e);
+        }
+      }
+
+      // Helper to extract first name
+      function extractFirstName(fullName) {
+        if (!fullName) return '';
+        const parts = fullName.trim().split(/\s+/);
+        return parts[0] ? (parts[0].charAt(0).toUpperCase() + parts[0].slice(1)) : '';
+      }
+
+      // -------------------------------------------------------------
       // DOM Elements
-      const form = document.getElementById('signupForm');
-      const formCard = document.getElementById('formCard');
+      // -------------------------------------------------------------
+      const portalContainer = document.getElementById('portalContainer');
       const headerArea = document.getElementById('headerArea');
-      const successCard = document.getElementById('successCard');
+      const pageTitle = document.getElementById('pageTitle');
+      const pageSubtitle = document.getElementById('pageSubtitle');
+      const authToggleArea = document.getElementById('authToggleArea');
+
+      const tabSignup = document.getElementById('tabSignup');
+      const tabLogin = document.getElementById('tabLogin');
+
+      const formCard = document.getElementById('formCard');
+      const authForm = document.getElementById('authForm');
+      const nameGroup = document.getElementById('nameGroup');
+      const phoneGroup = document.getElementById('phoneGroup');
+      const codeGroup = document.getElementById('codeGroup');
+      const codeLabel = document.getElementById('codeLabel');
 
       const nameInput = document.getElementById('fullName');
       const nameError = document.getElementById('nameError');
@@ -616,20 +1215,116 @@
       const codeCounter = document.getElementById('codeCounter');
       const codeError = document.getElementById('codeError');
 
+      const submitBtn = document.getElementById('submitBtn');
+      const switchHint = document.getElementById('switchHint');
+      const switchLink = document.getElementById('switchLink');
+      const demoHintBox = document.getElementById('demoHintBox');
+      const demoCodePill = document.getElementById('demoCodePill');
+
+      const successCard = document.getElementById('successCard');
       const summaryName = document.getElementById('summaryName');
       const summaryPhone = document.getElementById('summaryPhone');
       const summaryCode = document.getElementById('summaryCode');
+      const proceedToMapBtn = document.getElementById('proceedToMapBtn');
       const editDetailsBtn = document.getElementById('editDetailsBtn');
 
-      // State
+      const mapViewContainer = document.getElementById('mapViewContainer');
+      const userAvatar = document.getElementById('userAvatar');
+      const mapGreeting = document.getElementById('mapGreeting');
+      const userStatusText = document.getElementById('userStatusText');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const btnCompleteHandover = document.getElementById('btnCompleteHandover');
+      const btnCallCustomer = document.getElementById('btnCallCustomer');
+
+      // State: 'signup' | 'login'
+      let currentMode = 'signup';
       let hasAttemptedSubmit = false;
+      let lastRegisteredUser = null;
 
       // -------------------------------------------------------------
-      // 1. Name Validation
+      // Mode Switching (Sign up <-> Log in)
+      // -------------------------------------------------------------
+      function setMode(mode) {
+        currentMode = mode;
+        hasAttemptedSubmit = false;
+        clearErrors();
+
+        if (mode === 'signup') {
+          tabSignup.classList.add('active');
+          tabSignup.setAttribute('aria-selected', 'true');
+          tabLogin.classList.remove('active');
+          tabLogin.setAttribute('aria-selected', 'false');
+
+          pageTitle.textContent = 'Sign up';
+          pageSubtitle.textContent = 'Enter your name, phone number and 5 digit code.';
+          
+          nameGroup.style.display = 'block';
+          phoneGroup.style.display = 'block';
+          codeLabel.textContent = 'Code';
+          submitBtn.textContent = 'Sign up';
+          switchHint.innerHTML = 'Already have an employee code? <a id="switchLink">Log in</a>';
+          demoHintBox.style.display = 'flex';
+          demoHintBox.querySelector('span').textContent = 'Demo employee code:';
+        } else {
+          tabLogin.classList.add('active');
+          tabLogin.setAttribute('aria-selected', 'true');
+          tabSignup.classList.remove('active');
+          tabSignup.setAttribute('aria-selected', 'false');
+
+          pageTitle.textContent = 'Welcome back';
+          pageSubtitle.textContent = 'Enter your 5 digit code to access your employee map.';
+
+          nameGroup.style.display = 'none';
+          phoneGroup.style.display = 'none';
+          codeLabel.textContent = 'Enter your 5-digit code';
+          submitBtn.textContent = 'Log in';
+          switchHint.innerHTML = "Don't have an account yet? <a id="switchLink">Sign up</a>";
+          demoHintBox.style.display = 'flex';
+          demoHintBox.querySelector('span').textContent = 'Quick test login:';
+        }
+
+        // Re-attach switch link click event
+        const newSwitchLink = document.getElementById('switchLink');
+        if (newSwitchLink) {
+          newSwitchLink.addEventListener('click', () => {
+            setMode(currentMode === 'signup' ? 'login' : 'signup');
+          });
+        }
+
+        codeInput.focus();
+      }
+
+      tabSignup.addEventListener('click', () => setMode('signup'));
+      tabLogin.addEventListener('click', () => setMode('login'));
+      switchLink.addEventListener('click', () => setMode('login'));
+
+      // Demo Code autofill
+      demoCodePill.addEventListener('click', () => {
+        codeInput.value = '20001';
+        formatAndValidateCode();
+        if (currentMode === 'signup') {
+          nameInput.value = 'Rahul Sharma';
+          phoneInput.value = '98765 43210';
+          validateName();
+          formatAndValidatePhone();
+        }
+      });
+
+      function clearErrors() {
+        nameInput.classList.remove('has-error');
+        nameError.classList.remove('visible');
+        phoneWrapper.classList.remove('has-error');
+        phoneError.classList.remove('visible');
+        codeInput.classList.remove('has-error');
+        codeError.classList.remove('visible');
+      }
+
+      // -------------------------------------------------------------
+      // Field Validations
       // -------------------------------------------------------------
       function validateName() {
+        if (currentMode === 'login') return true;
         const val = nameInput.value.trim();
-        // At least 2 letters
         const letterRegex = /[a-zA-Z]/g;
         const letterMatches = val.match(letterRegex);
         const isValid = letterMatches && letterMatches.length >= 2;
@@ -648,27 +1343,12 @@
         }
       }
 
-      nameInput.addEventListener('blur', () => {
-        if (hasAttemptedSubmit || nameInput.value.trim().length > 0) {
-          validateName();
-        }
-      });
-
-      nameInput.addEventListener('input', () => {
-        if (nameInput.classList.contains('has-error')) {
-          validateName();
-        }
-      });
-
-      // -------------------------------------------------------------
-      // 2. Phone Formatting & Validation
-      // -------------------------------------------------------------
       function formatAndValidatePhone(showError = false) {
+        if (currentMode === 'login') return true;
         const country = countrySelect.value;
         let rawDigits = phoneInput.value.replace(/\D/g, '');
 
         if (country === '+91') {
-          // India formatting: 5 digits + space + 5 digits, max 10 digits
           rawDigits = rawDigits.slice(0, 10);
           if (rawDigits.length > 5) {
             phoneInput.value = rawDigits.slice(0, 5) + ' ' + rawDigits.slice(5);
@@ -676,12 +1356,10 @@
             phoneInput.value = rawDigits;
           }
         } else {
-          // Other countries: max 14 digits, no extra space forced
           rawDigits = rawDigits.slice(0, 14);
           phoneInput.value = rawDigits;
         }
 
-        // Validation logic
         let isValid = false;
         let errorText = '';
 
@@ -715,31 +1393,9 @@
         return isValid;
       }
 
-      phoneInput.addEventListener('input', () => {
-        formatAndValidatePhone(phoneWrapper.classList.contains('has-error'));
-      });
-
-      phoneInput.addEventListener('blur', () => {
-        formatAndValidatePhone(true);
-      });
-
-      countrySelect.addEventListener('change', () => {
-        if (countrySelect.value === '+91') {
-          phoneInput.placeholder = '98765 43210';
-        } else {
-          phoneInput.placeholder = 'Phone number';
-        }
-        formatAndValidatePhone(hasAttemptedSubmit || phoneInput.value.length > 0);
-      });
-
-      // -------------------------------------------------------------
-      // 3. 5-Digit Code Formatting & Validation
-      // -------------------------------------------------------------
       function formatAndValidateCode(showError = false) {
         let val = codeInput.value.replace(/\D/g, '').slice(0, 5);
         codeInput.value = val;
-
-        // Update counter "0/5"
         codeCounter.textContent = `${val.length}/5`;
 
         let isValid = val.length === 5;
@@ -763,51 +1419,172 @@
         return isValid;
       }
 
+      nameInput.addEventListener('blur', () => {
+        if (hasAttemptedSubmit || nameInput.value.trim().length > 0) validateName();
+      });
+      nameInput.addEventListener('input', () => {
+        if (nameInput.classList.contains('has-error')) validateName();
+      });
+
+      phoneInput.addEventListener('input', () => {
+        formatAndValidatePhone(phoneWrapper.classList.contains('has-error'));
+      });
+      phoneInput.addEventListener('blur', () => {
+        formatAndValidatePhone(true);
+      });
+      countrySelect.addEventListener('change', () => {
+        phoneInput.placeholder = countrySelect.value === '+91' ? '98765 43210' : 'Phone number';
+        formatAndValidatePhone(hasAttemptedSubmit || phoneInput.value.length > 0);
+      });
+
       codeInput.addEventListener('input', () => {
         formatAndValidateCode(codeInput.classList.contains('has-error'));
       });
-
       codeInput.addEventListener('blur', () => {
         formatAndValidateCode(true);
       });
 
       // -------------------------------------------------------------
-      // Form Submission
+      // Open Employee Map View
       // -------------------------------------------------------------
-      form.addEventListener('submit', (e) => {
+      function openEmployeeMap(user) {
+        const firstName = user.firstName || extractFirstName(user.fullName) || 'Employee';
+        
+        // Update user elements
+        userAvatar.textContent = firstName.charAt(0).toUpperCase();
+        mapGreeting.textContent = `Welcome, ${firstName}! 📍`;
+        userStatusText.textContent = `On Duty • ID #${user.code}`;
+
+        // Hide form and header, show map
+        headerArea.style.display = 'none';
+        authToggleArea.style.display = 'none';
+        formCard.style.display = 'none';
+        successCard.style.display = 'none';
+
+        portalContainer.classList.add('wide-mode');
+        mapViewContainer.style.display = 'block';
+      }
+
+      // Logout / Back to Login
+      logoutBtn.addEventListener('click', () => {
+        mapViewContainer.style.display = 'none';
+        portalContainer.classList.remove('wide-mode');
+        headerArea.style.display = 'block';
+        authToggleArea.style.display = 'block';
+        formCard.style.display = 'block';
+        setMode('login');
+      });
+
+      // Handover action demo
+      btnCompleteHandover.addEventListener('click', () => {
+        btnCompleteHandover.textContent = '✓ Delivered!';
+        btnCompleteHandover.style.backgroundColor = 'var(--success-green)';
+        setTimeout(() => {
+          alert('Delivery order #4829 successfully confirmed and recorded!');
+          btnCompleteHandover.textContent = '✓ Handover Done';
+          btnCompleteHandover.style.backgroundColor = '';
+        }, 300);
+      });
+
+      btnCallCustomer.addEventListener('click', () => {
+        alert('Calling customer Priya Sen (+91 98300 44556)...');
+      });
+
+      // Map Controls Demo
+      document.getElementById('btnRecenter').addEventListener('click', () => {
+        alert('GPS Recentered to current position (Salt Lake Sector V).');
+      });
+      document.getElementById('btnZoomIn').addEventListener('click', () => {
+        alert('Zoom In (Map level adjusted).');
+      });
+      document.getElementById('btnZoomOut').addEventListener('click', () => {
+        alert('Zoom Out (Map level adjusted).');
+      });
+
+      // -------------------------------------------------------------
+      // Form Submission Handler
+      // -------------------------------------------------------------
+      authForm.addEventListener('submit', (e) => {
         e.preventDefault();
         hasAttemptedSubmit = true;
 
-        const isNameValid = validateName();
-        const isPhoneValid = formatAndValidatePhone(true);
-        const isCodeValid = formatAndValidateCode(true);
+        if (currentMode === 'signup') {
+          // --- SIGN UP SUBMIT ---
+          const isNameValid = validateName();
+          const isPhoneValid = formatAndValidatePhone(true);
+          const isCodeValid = formatAndValidateCode(true);
 
-        if (!isNameValid || !isPhoneValid || !isCodeValid) {
-          // Focus the first invalid field
-          if (!isNameValid) {
-            nameInput.focus();
-          } else if (!isPhoneValid) {
-            phoneInput.focus();
-          } else if (!isCodeValid) {
-            codeInput.focus();
+          if (!isNameValid || !isPhoneValid || !isCodeValid) {
+            if (!isNameValid) nameInput.focus();
+            else if (!isPhoneValid) phoneInput.focus();
+            else if (!isCodeValid) codeInput.focus();
+            return;
           }
-          return;
+
+          const rawFullName = nameInput.value.trim();
+          const fName = extractFirstName(rawFullName);
+          const code = codeInput.value.trim();
+          const phone = `${countrySelect.value} ${phoneInput.value.trim()}`;
+
+          // Create & Save User Profile
+          const newUser = {
+            fullName: rawFullName,
+            firstName: fName,
+            phone: phone,
+            code: code,
+            role: 'Employee Courier',
+            createdAt: new Date().toISOString()
+          };
+
+          saveEmployeeProfile(newUser);
+          lastRegisteredUser = newUser;
+
+          // Populate Success Card
+          summaryName.textContent = rawFullName;
+          summaryPhone.textContent = phone;
+          summaryCode.textContent = code;
+
+          formCard.style.display = 'none';
+          headerArea.style.display = 'none';
+          authToggleArea.style.display = 'none';
+          successCard.style.display = 'block';
+
+        } else {
+          // --- LOG IN SUBMIT ---
+          const isCodeValid = formatAndValidateCode(true);
+          if (!isCodeValid) {
+            codeInput.focus();
+            return;
+          }
+
+          const enteredCode = codeInput.value.trim();
+          const matchedUser = getEmployeeByCode(enteredCode);
+
+          if (!matchedUser) {
+            codeInput.classList.add('has-error');
+            codeError.textContent = `No employee found with code ${enteredCode}. Please sign up first.`;
+            codeError.classList.add('visible');
+            codeInput.focus();
+            return;
+          }
+
+          // Found! Open the Employee Map with the matched user's first name
+          openEmployeeMap(matchedUser);
         }
+      });
 
-        // On valid submit: populate details and toggle view
-        summaryName.textContent = nameInput.value.trim();
-        summaryPhone.textContent = `${countrySelect.value} ${phoneInput.value.trim()}`;
-        summaryCode.textContent = codeInput.value.trim();
-
-        formCard.style.display = 'none';
-        headerArea.style.display = 'none';
-        successCard.style.display = 'block';
+      // Proceed to map from success card
+      proceedToMapBtn.addEventListener('click', () => {
+        if (lastRegisteredUser) {
+          openEmployeeMap(lastRegisteredUser);
+        }
       });
 
       // Edit Details button: brings the form back
       editDetailsBtn.addEventListener('click', () => {
         successCard.style.display = 'none';
         headerArea.style.display = 'block';
+        authToggleArea.style.display = 'block';
         formCard.style.display = 'block';
         nameInput.focus();
       });
