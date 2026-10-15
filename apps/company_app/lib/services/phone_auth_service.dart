@@ -141,6 +141,8 @@ class PhoneAuthService {
           return 'The phone number entered is invalid. Please check and try again.';
         case 'quota-exceeded':
           return 'Daily SMS quota reached. You can also use test code 123456.';
+        case 'too-many-requests':
+          return 'Too many attempts from this device. Please add your number to Firebase Console "Phone numbers for testing" with code 123456, or wait 15 minutes.';
         case 'unauthorized-domain':
           return 'Domain not authorized in Firebase Console. Please add addcohol.com to Firebase Authorized Domains.';
         case 'invalid-verification-code':
