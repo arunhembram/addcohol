@@ -99,11 +99,6 @@ class PhoneAuthService {
   }) async {
     final cleanCode = smsCode.trim();
 
-    // Universal test fallback (useful for testing or if SMS quota is exceeded)
-    if (cleanCode == '123456') {
-      debugPrint('[PhoneAuthService] Test OTP 123456 accepted.');
-      return true;
-    }
 
     if (kIsWeb) {
       if (_webConfirmationResult == null) {
