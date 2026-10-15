@@ -115,6 +115,100 @@ class EmployeeAuthNotifier extends StateNotifier<EmployeeAuthState> {
     }
   }
 
+  /// Direct 5-digit code login (retrieves employee profile and opens zone map)
+  Future<bool> loginWithCode(String displayId) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final cleanId = displayId.trim();
+      UserProfile? emp;
+      try {
+        emp = await _employeeRepo.verifyEmployeeId(cleanId);
+      } catch (_) {}
+
+      if (emp == null) {
+        final managed = CanonicalZones.getManagedEmployees();
+        for (final m in managed) {
+          if (m.displayId == cleanId && m.isActive) {
+            emp = m;
+            break;
+          }
+        }
+      }
+
+      if (emp == null) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'No employee account found with ID $cleanId. Please sign up first.',
+        );
+        return false;
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        currentEmployee: emp,
+        enteredEmployeeId: cleanId,
+        errorMessage: null,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Login failed: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Sign up with First Name, Last Name, Phone, and 5-digit code
+  Future<bool> signupWithDetails({
+    required String firstName,
+    required String lastName,
+    required String phoneNumber,
+    required String code,
+  }) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final cleanCode = code.trim();
+      final fullName = '${firstName.trim()} ${lastName.trim()}';
+
+      var emp = CanonicalZones.pairEmployeeCode(
+        cleanCode,
+        fullName: fullName,
+        phoneNumber: phoneNumber.trim(),
+      );
+
+      emp ??= UserProfile(
+        id: 'emp-$cleanCode',
+        email: '${firstName.trim().toLowerCase()}.${lastName.trim().toLowerCase()}@shopad.local',
+        fullName: fullName,
+        role: UserRole.employee,
+        phoneNumber: phoneNumber.trim(),
+        displayId: cleanCode,
+        isActive: true,
+        createdAt: DateTime.now(),
+        metadata: const {
+          'assigned_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
+        },
+      );
+
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        currentEmployee: emp,
+        enteredEmployeeId: cleanCode,
+        errorMessage: null,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Sign up failed: $e',
+      );
+      return false;
+    }
+  }
+
   void logout() {
     state = const EmployeeAuthState();
   }

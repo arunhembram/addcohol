@@ -121,6 +121,111 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
     }
   }
 
+  /// Direct 5-digit code login (retrieves admin profile and opens dashboard)
+  Future<bool> loginWithCode(String displayId) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final cleanId = displayId.trim();
+      UserProfile? admin;
+      try {
+        admin = await _adminRepo.verifyAdminId(cleanId);
+      } catch (_) {}
+
+      // Fallback seed admin check (e.g. 10001, 10002)
+      if (admin == null) {
+        if (cleanId == '10001') {
+          admin = UserProfile(
+            id: 'admin-10001',
+            email: 'subhasis.ghosh@shopad.local',
+            fullName: 'Subhasis Ghosh',
+            role: UserRole.admin,
+            phoneNumber: '+91 98765 43210',
+            displayId: '10001',
+            isActive: true,
+            createdAt: DateTime.now(),
+          );
+        } else if (cleanId == '10002') {
+          admin = UserProfile(
+            id: 'admin-10002',
+            email: 'priya.sen@shopad.local',
+            fullName: 'Priya Sen',
+            role: UserRole.admin,
+            phoneNumber: '+91 98300 11223',
+            displayId: '10002',
+            isActive: true,
+            createdAt: DateTime.now(),
+          );
+        }
+      }
+
+      if (admin == null) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'No admin account found with ID $cleanId. Please sign up first.',
+        );
+        return false;
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        currentAdmin: admin,
+        enteredAdminId: cleanId,
+        errorMessage: null,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Login failed: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Sign up with First Name, Last Name, Phone, and 5-digit code
+  Future<bool> signupWithDetails({
+    required String firstName,
+    required String lastName,
+    required String phoneNumber,
+    required String code,
+  }) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final cleanCode = code.trim();
+      final fullName = '${firstName.trim()} ${lastName.trim()}';
+
+      final admin = UserProfile(
+        id: 'admin-$cleanCode',
+        email: '${firstName.trim().toLowerCase()}.${lastName.trim().toLowerCase()}@shopad.local',
+        fullName: fullName,
+        role: UserRole.admin,
+        phoneNumber: phoneNumber.trim(),
+        displayId: cleanCode,
+        isActive: true,
+        createdAt: DateTime.now(),
+        metadata: const {
+          'admin_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
+        },
+      );
+
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        currentAdmin: admin,
+        enteredAdminId: cleanCode,
+        errorMessage: null,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Sign up failed: $e',
+      );
+      return false;
+    }
+  }
+
   void logout() {
     state = const AdminAuthState();
   }
