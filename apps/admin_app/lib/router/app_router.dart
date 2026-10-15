@@ -13,7 +13,7 @@ import '../screens/shops/shops_overview_screen.dart';
 import '../screens/zones/controlled_zone_map_screen.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/login',
   routes: [
     GoRoute(
       path: '/login',

@@ -11,7 +11,7 @@ import '../screens/shop/add_shop_screen.dart';
 import '../screens/payment/employee_payment_flow_screen.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/login',
   routes: [
     GoRoute(
       path: '/login',
