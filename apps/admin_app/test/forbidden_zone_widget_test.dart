@@ -1,5 +1,6 @@
 import 'package:admin_app/app.dart';
 import 'package:admin_app/providers/admin_state_providers.dart';
+import 'package:admin_app/screens/dashboard/admin_dashboard_screen.dart';
 import 'package:admin_app/screens/login/admin_login_screen.dart';
 import 'package:admin_app/screens/zones/controlled_zone_map_screen.dart';
 import 'package:app_core/app_core.dart';
@@ -11,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('Admin Login enforces 2-step verification and prohibits login with ID alone',
+  testWidgets('Admin Login screen renders Sign up and Log in tabs and validates inputs',
       (WidgetTester tester) async {
     const config = AppConfig(
       environment: AppEnvironment.dev,
@@ -36,30 +37,21 @@ void main() {
       ),
     );
 
-    // Initial state: Step 1 (Enter 5-digit Admin ID)
-    expect(find.text('Step 1 of 2: Admin Identification'), findsOneWidget);
-    expect(find.text('Enter your 5-digit Admin ID'), findsOneWidget);
+    // Initial state: Sign up tab and Log in tab rendered
+    expect(find.text('Sign up'), findsWidgets);
+    expect(find.text('Log in'), findsWidgets);
+    expect(find.text('FIRST NAME'), findsOneWidget);
+    expect(find.text('LAST NAME'), findsOneWidget);
+    expect(find.text('PHONE NUMBER'), findsOneWidget);
 
-    // Enter 5-digit ID
-    await tester.enterText(find.byType(TextField), '10001');
-    await tester.tap(find.text('Continue to Verification'));
+    // Attempting to submit empty form must trigger validation
+    await tester.tap(find.byType(ElevatedButton));
     await tester.pumpAndSettle();
 
-    // Step 2 must appear: Multi-Factor Verification
-    expect(find.text('Step 2 of 2: Multi-Factor Verification'), findsOneWidget);
-    expect(
-      find.textContaining('Security policy: Login with ID alone is prohibited'),
-      findsOneWidget,
-    );
-
-    // Attempting to submit without OTP/PIN must show error
-    await tester.tap(find.text('Verify & Enter Dashboard'));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.textContaining('Mobile OTP is mandatory. Login with ID alone is prohibited.'),
-      findsOneWidget,
-    );
+    expect(find.text('First name is required'), findsOneWidget);
+    expect(find.text('Last name is required'), findsOneWidget);
+    expect(find.text('Phone number is required'), findsOneWidget);
+    expect(find.text('5-digit admin code is required'), findsOneWidget);
   });
 
   testWidgets('ControlledZoneMapScreen safely displays error banner on ForbiddenZoneException',
@@ -143,6 +135,11 @@ void main() {
 
   testWidgets('Admin App boots and renders Dashboard Shell with profile and controlled zones',
       (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     const config = AppConfig(
       environment: AppEnvironment.dev,
       appName: 'Admin App Test',
@@ -163,14 +160,29 @@ void main() {
       ],
     );
 
+    final adminUser = UserProfile(
+      id: 'admin-10001',
+      email: 'subhasis@shopad.local',
+      fullName: 'Subhasis Sen',
+      role: UserRole.admin,
+      displayId: '10001',
+      isActive: true,
+      createdAt: DateTime.now(),
+    );
+    final supabaseManager = SupabaseManager(config: config);
+    final repository = SupabaseAdminRepository(supabaseManager: supabaseManager);
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           appConfigProvider.overrideWithValue(config),
           currentAppRoleProvider.overrideWithValue(UserRole.admin),
           appHealthDiagnosticsProvider.overrideWith((ref) => Future.value(mockHealth)),
+          adminAuthProvider.overrideWith((ref) => AdminAuthNotifier(repository)..setAuthenticatedAdmin(adminUser)),
         ],
-        child: const AdminApp(),
+        child: const MaterialApp(
+          home: AdminDashboardScreen(),
+        ),
       ),
     );
 

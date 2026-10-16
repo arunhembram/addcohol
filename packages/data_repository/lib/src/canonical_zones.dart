@@ -1076,12 +1076,104 @@ class CanonicalZones {
   }
 
   static void expelAdminFromZone(String zoneId, {bool syncRemote = true}) {
+    expelAdminFromZoneWithNewCode(zoneId, syncRemote: syncRemote);
+  }
+
+  /// Expels the existing admin from a zone and generates a fresh unclaimed 5-digit code for that zone.
+  /// The zone card immediately changes from the old admin's name to "Admin Code: $newCode".
+  /// When a new admin signs up with $newCode, it binds to their name and this zone automatically!
+  static UserProfile expelAdminFromZoneWithNewCode(String zoneId, {bool syncRemote = true}) {
+    final oldAdminId = _zoneAssignedAdminIds[zoneId];
+    if (oldAdminId != null && oldAdminId.isNotEmpty) {
+      final oldIdx = _managedAdmins.indexWhere((a) => a.id == oldAdminId || a.displayId == oldAdminId);
+      if (oldIdx >= 0) {
+        final oldAdmin = _managedAdmins[oldIdx];
+        final oldZones = List<String>.from(oldAdmin.metadata['admin_zones'] as List<dynamic>? ?? []);
+        oldZones.remove(zoneId);
+        _managedAdmins[oldIdx] = oldAdmin.copyWith(
+          metadata: {...oldAdmin.metadata, 'admin_zones': oldZones},
+        );
+      }
+    }
+
+    final code = (_adminDisplayIdCounter++).toString();
+    _zoneAdminCodes[zoneId] = code;
+
+    final newAdmin = UserProfile(
+      id: 'admin-code-$code',
+      email: '',
+      fullName: '',
+      role: UserRole.admin,
+      phoneNumber: '',
+      displayId: code,
+      isActive: true,
+      metadata: {
+        'admin_zones': [zoneId],
+      },
+      createdAt: DateTime.now(),
+    );
+
+    _managedAdmins.insert(0, newAdmin);
+
     assignAdminToZone(
       zoneId: zoneId,
-      adminId: null,
-      adminName: null,
-      syncRemote: syncRemote,
+      adminId: newAdmin.id,
+      adminName: 'Admin Code: $code',
+      adminPhone: '',
+      syncRemote: false,
     );
+
+    zonesRevision.value++;
+    if (syncRemote) {
+      unawaited(DistributionSyncService.pushAdmin(newAdmin));
+    }
+    return newAdmin;
+  }
+
+  /// Expel an active admin from Admin Directory: deactivates old admin and replaces their slot
+  /// with a fresh unclaimed 5-digit code, preserving any assigned zones.
+  static UserProfile expelAdmin(String adminId, {bool syncRemote = true}) {
+    final cleanId = adminId.trim();
+    final idx = _managedAdmins.indexWhere((a) => a.id == cleanId || a.displayId == cleanId);
+    List<String> preservedZones = [];
+    if (idx >= 0) {
+      final old = _managedAdmins[idx];
+      preservedZones = (old.metadata['admin_zones'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      _managedAdmins[idx] = old.copyWith(isActive: false);
+    }
+
+    final code = (_adminDisplayIdCounter++).toString();
+    final newAdmin = UserProfile(
+      id: 'admin-code-$code',
+      email: '',
+      fullName: '',
+      role: UserRole.admin,
+      phoneNumber: '',
+      displayId: code,
+      isActive: true,
+      metadata: {
+        'admin_zones': preservedZones,
+      },
+      createdAt: DateTime.now(),
+    );
+    _managedAdmins.insert(0, newAdmin);
+
+    for (final zid in preservedZones) {
+      _zoneAdminCodes[zid] = code;
+      assignAdminToZone(
+        zoneId: zid,
+        adminId: newAdmin.id,
+        adminName: 'Admin Code: $code',
+        adminPhone: '',
+        syncRemote: false,
+      );
+    }
+
+    zonesRevision.value++;
+    if (syncRemote) {
+      unawaited(DistributionSyncService.pushAdmin(newAdmin));
+    }
+    return newAdmin;
   }
 
   static String? getZoneAdminPhone(String zoneId) => _zoneAssignedAdminPhones[zoneId];
@@ -1422,7 +1514,7 @@ class CanonicalZones {
     bool syncRemote = true,
   }) {
     final cleanCode = code.trim();
-    final idx = _managedAdmins.indexWhere((a) => a.displayId == cleanCode || a.id == cleanCode || a.id == 'admin-$cleanCode');
+    final idx = _managedAdmins.indexWhere((a) => a.displayId == cleanCode || a.id == cleanCode || a.id == 'admin-$cleanCode' || a.id == 'admin-code-$cleanCode');
     if (idx >= 0) {
       final existing = _managedAdmins[idx];
       final updated = existing.copyWith(
@@ -1431,6 +1523,30 @@ class CanonicalZones {
         email: '${fullName.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@shopad.local',
       );
       _managedAdmins[idx] = updated;
+
+      // Automatically update the zone's assignedAdminName to the new admin's name!
+      final assignedZones = (updated.metadata['admin_zones'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      for (final zid in assignedZones) {
+        assignAdminToZone(
+          zoneId: zid,
+          adminId: updated.id,
+          adminName: '${updated.fullName} (ID: ${updated.displayId})',
+          adminPhone: updated.phoneNumber,
+          syncRemote: false,
+        );
+      }
+      for (final entry in _zoneAdminCodes.entries) {
+        if (entry.value == cleanCode && !assignedZones.contains(entry.key)) {
+          assignAdminToZone(
+            zoneId: entry.key,
+            adminId: updated.id,
+            adminName: '${updated.fullName} (ID: ${updated.displayId})',
+            adminPhone: updated.phoneNumber,
+            syncRemote: false,
+          );
+        }
+      }
+
       zonesRevision.value++;
       if (syncRemote) {
         unawaited(DistributionSyncService.pushAdmin(updated));
@@ -1444,17 +1560,68 @@ class CanonicalZones {
   static void syncRemoteAdmins(List<UserProfile> admins) {
     bool changed = false;
     for (final remote in admins) {
+      final parsed = int.tryParse(remote.displayId ?? '');
+      if (parsed != null && parsed >= _adminDisplayIdCounter) {
+        _adminDisplayIdCounter = parsed + 1;
+      }
       final idx = _managedAdmins.indexWhere((a) => a.displayId == remote.displayId || a.id == remote.id);
       if (idx >= 0) {
         if (_managedAdmins[idx].fullName != remote.fullName ||
             _managedAdmins[idx].phoneNumber != remote.phoneNumber ||
-            _managedAdmins[idx].isActive != remote.isActive) {
+            _managedAdmins[idx].isActive != remote.isActive ||
+            _managedAdmins[idx].metadata != remote.metadata) {
           _managedAdmins[idx] = remote;
           changed = true;
+          if (remote.fullName.isNotEmpty) {
+            final assignedZones = (remote.metadata['admin_zones'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+            for (final zid in assignedZones) {
+              assignAdminToZone(
+                zoneId: zid,
+                adminId: remote.id,
+                adminName: '${remote.fullName} (ID: ${remote.displayId})',
+                adminPhone: remote.phoneNumber,
+                syncRemote: false,
+              );
+            }
+            for (final entry in _zoneAdminCodes.entries) {
+              if (entry.value == remote.displayId && !assignedZones.contains(entry.key)) {
+                assignAdminToZone(
+                  zoneId: entry.key,
+                  adminId: remote.id,
+                  adminName: '${remote.fullName} (ID: ${remote.displayId})',
+                  adminPhone: remote.phoneNumber,
+                  syncRemote: false,
+                );
+              }
+            }
+          }
         }
       } else {
         _managedAdmins.add(remote);
         changed = true;
+        if (remote.fullName.isNotEmpty) {
+          final assignedZones = (remote.metadata['admin_zones'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+          for (final zid in assignedZones) {
+            assignAdminToZone(
+              zoneId: zid,
+              adminId: remote.id,
+              adminName: '${remote.fullName} (ID: ${remote.displayId})',
+              adminPhone: remote.phoneNumber,
+              syncRemote: false,
+            );
+          }
+          for (final entry in _zoneAdminCodes.entries) {
+            if (entry.value == remote.displayId && !assignedZones.contains(entry.key)) {
+              assignAdminToZone(
+                zoneId: entry.key,
+                adminId: remote.id,
+                adminName: '${remote.fullName} (ID: ${remote.displayId})',
+                adminPhone: remote.phoneNumber,
+                syncRemote: false,
+              );
+            }
+          }
+        }
       }
     }
     if (changed) {

@@ -1,4 +1,6 @@
 import 'package:admin_app/app.dart';
+import 'package:admin_app/providers/admin_state_providers.dart';
+import 'package:admin_app/screens/dashboard/admin_dashboard_screen.dart';
 import 'package:app_core/app_core.dart';
 import 'package:data_repository/data_repository.dart';
 import 'package:domain_models/domain_models.dart';
@@ -31,6 +33,18 @@ void main() {
       ],
     );
 
+    final adminUser = UserProfile(
+      id: 'admin-10001',
+      email: 'subhasis@shopad.local',
+      fullName: 'Subhasis Sen',
+      role: UserRole.admin,
+      displayId: '10001',
+      isActive: true,
+      createdAt: DateTime.now(),
+    );
+    final supabaseManager = SupabaseManager(config: config);
+    final repository = SupabaseAdminRepository(supabaseManager: supabaseManager);
+
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -41,8 +55,11 @@ void main() {
           appConfigProvider.overrideWithValue(config),
           currentAppRoleProvider.overrideWithValue(UserRole.admin),
           appHealthDiagnosticsProvider.overrideWith((ref) => Future.value(mockHealth)),
+          adminAuthProvider.overrideWith((ref) => AdminAuthNotifier(repository)..setAuthenticatedAdmin(adminUser)),
         ],
-        child: const AdminApp(),
+        child: const MaterialApp(
+          home: AdminDashboardScreen(),
+        ),
       ),
     );
 
@@ -60,23 +77,22 @@ void main() {
 
     // CRITICAL REQUIREMENT: Salt Lake Sector V and any zone must have ALL Master Catalog materials
     final catalogMaterials = CanonicalZones.getAllMaterials();
-    expect(catalogMaterials.length, equals(4));
+    expect(catalogMaterials.length, equals(5));
 
     final saltLakeRuns = CanonicalZones.getMaterialRuns(CanonicalZones.saltLakeSector5Id);
-    expect(saltLakeRuns.length, equals(4));
+    expect(saltLakeRuns.length, equals(5));
     expect(saltLakeRuns.map((r) => r.materialName), containsAll([
+      'Paper',
+      'Pens',
       'Cello Tape',
-      'Marker Pen',
-      'Glue Stick',
-      'QR Acrylic Stand',
     ]));
 
     final kolkataRuns = CanonicalZones.getMaterialRuns(CanonicalZones.kolkataCentralId);
-    expect(kolkataRuns.length, equals(4));
+    expect(kolkataRuns.length, equals(5));
 
     // Any newly created zone automatically gets all materials
     final newZoneRuns = CanonicalZones.getMaterialRuns('z-newly-created-zone');
-    expect(newZoneRuns.length, equals(4));
+    expect(newZoneRuns.length, equals(5));
 
     // Switches exist for independent company campaigns and materials
     final switches = find.byType(Switch);

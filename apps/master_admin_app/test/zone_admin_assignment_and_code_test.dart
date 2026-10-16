@@ -88,6 +88,45 @@ void main() {
       expect(find.text('Change Admin'), findsOneWidget);
       expect(find.text('Expel Admin'), findsOneWidget);
     });
+
+    testWidgets('Pending pairing zone displays Admin Code and Pending Pairing badge with Copy Code button', (tester) async {
+      final pendingZone = Zone(
+        id: 'z-test-pending',
+        name: 'Salt Lake Sector V',
+        colorHex: '#00897B',
+        isActive: true,
+        isArchived: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        assignedAdminId: 'admin-code-10005',
+        assignedAdminName: 'Admin Code: 10005',
+        vertices: const [
+          ZoneVertex(sequenceOrder: 0, latitude: 22.5, longitude: 88.3),
+          ZoneVertex(sequenceOrder: 1, latitude: 22.51, longitude: 88.31),
+          ZoneVertex(sequenceOrder: 2, latitude: 22.5, longitude: 88.32),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: ZoneAdminDashboardPanel(
+                zone: pendingZone,
+                shops: const [],
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Admin Code: 10005'), findsOneWidget);
+      expect(find.text('⚪ Pending Pairing / Login'), findsOneWidget);
+      expect(find.text('Copy Code (10005)'), findsOneWidget);
+      expect(find.text('Change Admin'), findsOneWidget);
+    });
   });
 
   group('Admin Directory & Code Generation Tests', () {

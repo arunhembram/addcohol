@@ -60,6 +60,7 @@ class _ZoneAdminDashboardPanelState extends ConsumerState<ZoneAdminDashboardPane
     super.initState();
     _adminCode = CanonicalZones.getZoneAdminCode(widget.zone.id);
     _initPricingControllers();
+    CanonicalZones.zonesRevision.addListener(_onZonesRevisionChanged);
 
     // Auto-sync remote state every 2 seconds
     _syncTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
@@ -69,6 +70,14 @@ class _ZoneAdminDashboardPanelState extends ConsumerState<ZoneAdminDashboardPane
         setState(() {});
       }
     });
+  }
+
+  void _onZonesRevisionChanged() {
+    if (mounted) {
+      setState(() {
+        _adminCode = CanonicalZones.getZoneAdminCode(widget.zone.id);
+      });
+    }
   }
 
   void _initPricingControllers() {
@@ -97,6 +106,7 @@ class _ZoneAdminDashboardPanelState extends ConsumerState<ZoneAdminDashboardPane
 
   @override
   void dispose() {
+    CanonicalZones.zonesRevision.removeListener(_onZonesRevisionChanged);
     _syncTimer?.cancel();
     _disposeControllers();
     super.dispose();
@@ -525,28 +535,88 @@ class _ZoneAdminDashboardPanelState extends ConsumerState<ZoneAdminDashboardPane
             label: const Text('Expel Admin'),
             onPressed: () async {
               Navigator.pop(ctx);
-              CanonicalZones.expelAdminFromZone(widget.zone.id, syncRemote: true);
+              final newAdmin = CanonicalZones.expelAdminFromZoneWithNewCode(widget.zone.id, syncRemote: true);
               try {
                 final repo = ref.read(masterAdminRepositoryProvider);
                 final updatedZone = widget.zone.copyWith(
-                  assignedAdminId: null,
-                  assignedAdminName: null,
+                  assignedAdminId: newAdmin.id,
+                  assignedAdminName: 'Admin Code: ${newAdmin.displayId}',
                   updatedAt: DateTime.now(),
                 );
                 await repo.saveZone(
                   updatedZone,
                   widget.zone.vertices,
-                  assignedAdminId: null,
+                  assignedAdminId: newAdmin.id,
                 );
               } catch (_) {}
 
               ref.invalidate(zonesListProvider);
               if (mounted) {
                 setState(() {});
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Admin expelled from "${widget.zone.name}". Zone is now vacant.'),
-                    backgroundColor: const Color(0xFF0F2A43),
+                showDialog(
+                  context: context,
+                  builder: (dCtx) => AlertDialog(
+                    title: const Row(
+                      children: [
+                        Icon(Icons.check_circle_rounded, color: Colors.green, size: 26),
+                        SizedBox(width: 8),
+                        Text('Admin Expelled & Code Generated'),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'The previous admin has been expelled from "${widget.zone.name}". A fresh unclaimed Admin Code has been generated for this zone:',
+                          style: const TextStyle(fontSize: 13),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F2A43),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            newAdmin.displayId ?? '',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 4,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Provide this 5-digit code to the new administrator. When they log in on Admin App, their name will appear on this zone card automatically.',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.copy_rounded, size: 16),
+                        label: const Text('Copy Code'),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: newAdmin.displayId ?? ''));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Admin Code ${newAdmin.displayId} copied to clipboard!'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F2A43)),
+                        onPressed: () => Navigator.pop(dCtx),
+                        child: const Text('Done'),
+                      ),
+                    ],
                   ),
                 );
               }
@@ -1096,6 +1166,134 @@ class _ZoneAdminDashboardPanelState extends ConsumerState<ZoneAdminDashboardPane
                                 ),
                                 onPressed: () => _showAssignAdminDialog(isReassign: false),
                               ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // PENDING PAIRING / NEW CODE GENERATED STATE (After expel or new code assigned)
+                    final bool isPendingPairing = assignedAdminName.contains('Admin Code:') ||
+                        assignedAdminName.contains('Pending Pairing') ||
+                        (assignedAdminId.startsWith('admin-code-') && !assignedAdminName.contains('('));
+
+                    if (isPendingPairing) {
+                      final cleanCode = assignedAdminName.contains('Admin Code:')
+                          ? assignedAdminName.replaceFirst('Admin Code:', '').trim()
+                          : (assignedAdminId.replaceFirst('admin-code-', '').trim());
+
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.amber.shade300, width: 1.2),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: Colors.amber.shade100,
+                                  child: Icon(Icons.vpn_key_rounded, color: Colors.amber.shade800, size: 20),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              'Admin Code: $cleanCode',
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber.shade100,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              '⚪ Pending Pairing / Login',
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.amber.shade900,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      const Text(
+                                        'Awaiting admin sign up with this code on Admin App • Name will bind automatically',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFF0F2A43),
+                                      side: const BorderSide(color: Color(0xFF94A3B8)),
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    icon: const Icon(Icons.copy_rounded, size: 15),
+                                    label: Text(
+                                      'Copy Code ($cleanCode)',
+                                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                                    ),
+                                    onPressed: () {
+                                      Clipboard.setData(ClipboardData(text: cleanCode));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Admin Code $cleanCode copied to clipboard!'),
+                                          backgroundColor: const Color(0xFF0F2A43),
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFF0F2A43),
+                                      side: const BorderSide(color: Color(0xFF94A3B8)),
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                                    label: const Text(
+                                      'Change Admin',
+                                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                                    ),
+                                    onPressed: () => _showAssignAdminDialog(isReassign: true),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

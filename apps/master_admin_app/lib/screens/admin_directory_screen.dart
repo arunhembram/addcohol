@@ -208,6 +208,140 @@ class _AdminDirectoryScreenState extends ConsumerState<AdminDirectoryScreen> {
     );
   }
 
+  void _showExpelAdminConfirmationDialog(UserProfile admin) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Expel Admin & Rotate Code?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to expel "${admin.fullName}" (Code: ${admin.displayId})?',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🛡️ Automatic Re-pairing Cycle:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF0F2A43)),
+                  ),
+                  SizedBox(height: 4),
+                  Text('• This admin will be deactivated and removed.', style: TextStyle(fontSize: 11)),
+                  Text('• A fresh 5-digit Admin Code will take their place immediately.', style: TextStyle(fontSize: 11)),
+                  Text('• Their assigned zones will be transferred to the new code.', style: TextStyle(fontSize: 11)),
+                  Text('• Field operations and ad campaigns continue with 0 disruption.', style: TextStyle(fontSize: 11)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+            icon: const Icon(Icons.person_remove_outlined, size: 16),
+            label: const Text('Expel Admin'),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final newAdmin = CanonicalZones.expelAdmin(admin.id, syncRemote: true);
+              ref.invalidate(adminsListProvider);
+              if (mounted) {
+                showDialog(
+                  context: context,
+                  builder: (dCtx) => AlertDialog(
+                    title: const Row(
+                      children: [
+                        Icon(Icons.check_circle_rounded, color: Colors.green, size: 26),
+                        SizedBox(width: 8),
+                        Text('Admin Expelled & Replacement Code Ready'),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '"${admin.fullName}" has been expelled. A fresh replacement Admin Code has been generated:',
+                          style: const TextStyle(fontSize: 13),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F2A43),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            newAdmin.displayId ?? '',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 4,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Provide this code to the new administrator. When they sign up on Admin App, their profile name will replace this code automatically.',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.copy_rounded, size: 16),
+                        label: const Text('Copy Code'),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: newAdmin.displayId ?? ''));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Admin Code ${newAdmin.displayId} copied!')),
+                          );
+                        },
+                      ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F2A43)),
+                        onPressed: () => Navigator.pop(dCtx),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAdminContactSheet(String name, String phone) {
     showModalBottomSheet(
       context: context,
@@ -620,6 +754,18 @@ class _AdminDirectoryScreenState extends ConsumerState<AdminDirectoryScreen> {
                                   icon: const Icon(Icons.assignment_ind_outlined, size: 16),
                                   label: const Text('Assign Zones', style: TextStyle(fontSize: 12)),
                                   onPressed: () => context.push('/admins/assign?adminId=${admin.id}'),
+                                ),
+                                const SizedBox(width: 6),
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red.shade700,
+                                    side: BorderSide(color: Colors.red.shade300),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  icon: const Icon(Icons.person_remove_outlined, size: 14),
+                                  label: const Text('Expel Admin', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                                  onPressed: () => _showExpelAdminConfirmationDialog(admin),
                                 ),
                               ],
                             ],

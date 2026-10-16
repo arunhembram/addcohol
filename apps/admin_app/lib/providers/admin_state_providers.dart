@@ -224,6 +224,15 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
     }
   }
 
+  void setAuthenticatedAdmin(UserProfile admin) {
+    state = state.copyWith(
+      isAuthenticated: true,
+      currentAdmin: admin,
+      enteredAdminId: admin.displayId,
+      errorMessage: null,
+    );
+  }
+
   void logout() {
     state = const AdminAuthState();
   }
