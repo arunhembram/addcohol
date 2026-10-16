@@ -363,7 +363,7 @@ class SupabaseAdminRepository implements IAdminRepository {
       } catch (_) {}
     }
 
-    final allowedZoneIds = _adminZoneMapping[resolvedAdminId] ?? _adminZoneMapping['admin-10001']!;
+    final allowedZoneIds = _adminZoneMapping[resolvedAdminId] ?? const <String>[];
     return _mockAllZones.where((z) {
       if (allowedZoneIds.contains(z.id)) return true;
       if (z.assignedAdminId == resolvedAdminId || z.assignedAdminId == adminId) return true;

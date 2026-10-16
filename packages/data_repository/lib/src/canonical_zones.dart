@@ -1402,7 +1402,7 @@ class CanonicalZones {
       displayId: code,
       isActive: true,
       metadata: const {
-        'admin_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
+        'admin_zones': <String>[],
       },
       createdAt: DateTime.now(),
     );
@@ -1415,7 +1415,7 @@ class CanonicalZones {
   }
 
   /// Pair/bind an admin code with the admin's name and phone number upon login/signup
-  static UserProfile pairAdminCode(
+  static UserProfile? pairAdminCode(
     String code, {
     required String fullName,
     required String phoneNumber,
@@ -1423,36 +1423,21 @@ class CanonicalZones {
   }) {
     final cleanCode = code.trim();
     final idx = _managedAdmins.indexWhere((a) => a.displayId == cleanCode || a.id == cleanCode || a.id == 'admin-$cleanCode');
-    UserProfile updated;
     if (idx >= 0) {
       final existing = _managedAdmins[idx];
-      updated = existing.copyWith(
+      final updated = existing.copyWith(
         fullName: fullName.trim(),
         phoneNumber: phoneNumber.trim(),
         email: '${fullName.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@shopad.local',
       );
       _managedAdmins[idx] = updated;
-    } else {
-      updated = UserProfile(
-        id: 'admin-$cleanCode',
-        email: '${fullName.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@shopad.local',
-        fullName: fullName.trim(),
-        role: UserRole.admin,
-        phoneNumber: phoneNumber.trim(),
-        displayId: cleanCode,
-        isActive: true,
-        metadata: const {
-          'admin_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
-        },
-        createdAt: DateTime.now(),
-      );
-      _managedAdmins.insert(0, updated);
+      zonesRevision.value++;
+      if (syncRemote) {
+        unawaited(DistributionSyncService.pushAdmin(updated));
+      }
+      return updated;
     }
-    zonesRevision.value++;
-    if (syncRemote) {
-      unawaited(DistributionSyncService.pushAdmin(updated));
-    }
-    return updated;
+    return null;
   }
 
   /// Synchronize remote admins received from sync server or database

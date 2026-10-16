@@ -147,6 +147,7 @@ void main() async {
           'customZones': customZones.values.toList(),
           'zonePricings': zonePricings,
           'employeeZoneAssignments': employeeZoneAssignments,
+          'admins': admins.values.toList(),
         });
         request.response
           ..headers.contentType = ContentType.json

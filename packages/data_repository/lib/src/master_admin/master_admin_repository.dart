@@ -460,6 +460,9 @@ class SupabaseMasterAdminRepository implements IMasterAdminRepository {
   @override
   Future<UserProfile> pairAdminCode(String code, {required String fullName, required String phoneNumber}) async {
     final updated = CanonicalZones.pairAdminCode(code, fullName: fullName, phoneNumber: phoneNumber);
+    if (updated == null) {
+      throw const ValidationException('Admin Code not found. Please verify with Master Admin.');
+    }
     return updated;
   }
 

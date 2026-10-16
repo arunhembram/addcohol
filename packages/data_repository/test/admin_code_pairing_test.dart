@@ -27,7 +27,8 @@ void main() {
         syncRemote: false,
       );
 
-      expect(paired.fullName, equals('Arun Hembram'));
+      expect(paired, isNotNull);
+      expect(paired!.fullName, equals('Arun Hembram'));
       expect(paired.phoneNumber, equals('+91 98765 43210'));
       expect(paired.displayId, equals(code));
       expect(paired.email, equals('arun.hembram@shopad.local'));
@@ -73,6 +74,24 @@ void main() {
       expect(verified, isNotNull);
       expect(verified!.fullName, equals('Deepak Roy'));
       expect(verified.displayId, equals(codeAdmin.displayId));
+    });
+
+    test('5. Reject ungenerated random admin codes', () {
+      final invalidPair = CanonicalZones.pairAdminCode(
+        '99999', // Never created by Master Admin
+        fullName: 'Intruder Admin',
+        phoneNumber: '+91 99999 88888',
+        syncRemote: false,
+      );
+      expect(invalidPair, isNull);
+    });
+
+    test('6. Newly generated admin has 0 assigned zones initially', () async {
+      final codeAdmin = CanonicalZones.createAdminCode(syncRemote: false);
+      final adminRepo = SupabaseAdminRepository();
+
+      final controlled = await adminRepo.getControlledZones(codeAdmin.id);
+      expect(controlled, isEmpty);
     });
   });
 }

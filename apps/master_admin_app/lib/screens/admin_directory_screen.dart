@@ -348,7 +348,10 @@ class _AdminDirectoryScreenState extends ConsumerState<AdminDirectoryScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Admins',
-            onPressed: () => ref.invalidate(adminsListProvider),
+            onPressed: () async {
+              await DistributionSyncService.fetchRemoteState();
+              ref.invalidate(adminsListProvider);
+            },
           ),
         ],
       ),
