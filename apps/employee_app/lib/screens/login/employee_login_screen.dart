@@ -1,3 +1,4 @@
+import 'package:data_repository/data_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +38,7 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
   @override
   void initState() {
     super.initState();
+    DistributionSyncService.fetchRemoteState();
     _codeController.addListener(() {
       setState(() {});
     });

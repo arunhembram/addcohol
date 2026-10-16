@@ -1267,18 +1267,40 @@ class CanonicalZones {
   /// Get zone IDs assigned to an employee
   static List<String> getEmployeeAssignedZoneIds(String employeeId) {
     final cleanId = employeeId.trim();
-    final result = <String>[];
+    final bareCode = cleanId.replaceAll(RegExp(r'^emp-(code-)?'), '');
+    final candidates = {
+      cleanId,
+      'emp-$cleanId',
+      bareCode,
+      'emp-$bareCode',
+      'emp-code-$bareCode',
+    };
 
-    if (_employeeZoneAssignments.containsKey(cleanId)) {
-      result.addAll(_employeeZoneAssignments[cleanId]!);
-    } else if (_employeeZoneAssignments.containsKey('emp-$cleanId')) {
-      result.addAll(_employeeZoneAssignments['emp-$cleanId']!);
-    } else if (_defaultEmployeeZoneAssignments.containsKey(cleanId)) {
-      result.addAll(_defaultEmployeeZoneAssignments[cleanId]!);
-    } else if (_defaultEmployeeZoneAssignments.containsKey('emp-$cleanId')) {
-      result.addAll(_defaultEmployeeZoneAssignments['emp-$cleanId']!);
+    for (final c in candidates) {
+      if (_employeeZoneAssignments.containsKey(c)) {
+        return List<String>.from(_employeeZoneAssignments[c]!);
+      }
     }
-    return result;
+
+    // Also check employee metadata if available
+    for (final emp in _managedEmployees) {
+      if (candidates.contains(emp.id) || candidates.contains(emp.displayId)) {
+        final assigned = (emp.metadata['assigned_zones'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList();
+        if (assigned != null) {
+          return List<String>.from(assigned);
+        }
+      }
+    }
+
+    for (final c in candidates) {
+      if (_defaultEmployeeZoneAssignments.containsKey(c)) {
+        return List<String>.from(_defaultEmployeeZoneAssignments[c]!);
+      }
+    }
+
+    return const <String>[];
   }
 
   /// Get full Zone objects assigned to an employee
@@ -1294,7 +1316,31 @@ class CanonicalZones {
     bool syncRemote = true,
   }) {
     final cleanId = employeeId.trim();
-    _employeeZoneAssignments[cleanId] = List.from(zoneIds);
+    final bareCode = cleanId.replaceAll(RegExp(r'^emp-(code-)?'), '');
+    final list = List<String>.from(zoneIds);
+
+    _employeeZoneAssignments[cleanId] = list;
+    if (bareCode.isNotEmpty) {
+      _employeeZoneAssignments[bareCode] = list;
+      _employeeZoneAssignments['emp-$bareCode'] = list;
+      _employeeZoneAssignments['emp-code-$bareCode'] = list;
+    }
+
+    // Update _managedEmployees metadata so it's consistent everywhere!
+    final idx = _managedEmployees.indexWhere((e) =>
+        e.id == cleanId ||
+        e.displayId == cleanId ||
+        (bareCode.isNotEmpty && (e.displayId == bareCode || e.id == 'emp-$bareCode' || e.id == 'emp-code-$bareCode')));
+    if (idx >= 0) {
+      final updatedMeta = Map<String, dynamic>.from(_managedEmployees[idx].metadata);
+      updatedMeta['assigned_zones'] = list;
+      final updatedEmp = _managedEmployees[idx].copyWith(metadata: updatedMeta);
+      _managedEmployees[idx] = updatedEmp;
+      if (syncRemote) {
+        unawaited(DistributionSyncService.pushEmployee(updatedEmp));
+      }
+    }
+
     zonesRevision.value++;
     if (syncRemote) {
       unawaited(DistributionSyncService.pushEmployeeZoneAssignment(cleanId, zoneIds));

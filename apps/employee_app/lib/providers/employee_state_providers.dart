@@ -55,6 +55,7 @@ class EmployeeAuthNotifier extends StateNotifier<EmployeeAuthState> {
   Future<bool> initiateEmployeeLogin(String displayId) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
+      await DistributionSyncService.fetchRemoteState();
       final emp = await _employeeRepo.verifyEmployeeId(displayId);
       if (emp == null) {
         state = state.copyWith(
@@ -121,6 +122,10 @@ class EmployeeAuthNotifier extends StateNotifier<EmployeeAuthState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final cleanId = displayId.trim();
+
+      // Ensure fresh employee state from remote sync server / database
+      await DistributionSyncService.fetchRemoteState();
+
       UserProfile? emp;
       try {
         emp = await _employeeRepo.verifyEmployeeId(cleanId);
@@ -140,6 +145,15 @@ class EmployeeAuthNotifier extends StateNotifier<EmployeeAuthState> {
         state = state.copyWith(
           isLoading: false,
           errorMessage: 'No employee account found with ID $cleanId. Please sign up first.',
+        );
+        return false;
+      }
+
+      // If code was created by admin but employee has not completed signup (name is empty)
+      if (emp.fullName.trim().isEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Employee code $cleanId is active but not registered yet. Please switch to the "Sign up" tab to register.',
         );
         return false;
       }

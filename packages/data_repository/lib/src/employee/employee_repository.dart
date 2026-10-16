@@ -646,11 +646,19 @@ class SupabaseEmployeeRepository implements IEmployeeRepository {
 
   String _resolveEmployeeId(String input) {
     if (input.startsWith('emp-')) return input;
-    final match = _mockEmployees.firstWhere(
+    final managed = CanonicalZones.getManagedEmployees();
+    for (final e in managed) {
+      if (e.displayId == input || e.id == input) {
+        return e.id;
+      }
+    }
+    final match = _mockEmployees.where(
       (e) => e.displayId == input || e.id == input,
-      orElse: () => _mockEmployees.first,
     );
-    return match.id;
+    if (match.isNotEmpty) {
+      return match.first.id;
+    }
+    return 'emp-$input';
   }
 
   bool _isPointInPolygon(double lat, double lng, List<ZoneVertex> vertices) {
