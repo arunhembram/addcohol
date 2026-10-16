@@ -391,14 +391,9 @@ class CanonicalZones {
 
   // --- Company Ad Runs Methods ---
   static List<CompanyAdDistributionRun> getCompanyAdRuns(String zoneId) {
-    var runs = _zoneCompanyAdRuns[zoneId];
-    if (runs == null || runs.isEmpty) {
-      final template = _zoneCompanyAdRuns[kolkataCentralId] ?? const [];
-      runs = template.map((r) => r.copyWith(
-        id: 'ad-run-$zoneId-${r.companyId}',
-        zoneId: zoneId,
-      )).toList();
-      _zoneCompanyAdRuns[zoneId] = runs;
+    final runs = _zoneCompanyAdRuns[zoneId];
+    if (runs == null) {
+      return const [];
     }
     return List.unmodifiable(runs);
   }
@@ -1064,6 +1059,23 @@ class CanonicalZones {
     } else if (adminId == null) {
       _zoneAssignedAdminPhones.remove(zoneId);
     }
+    if (adminId != null) {
+      final managed = _managedAdmins.firstWhere(
+        (a) => a.id == adminId || a.displayId == adminId,
+        orElse: () => UserProfile(
+          id: '',
+          email: '',
+          fullName: '',
+          role: UserRole.admin,
+          createdAt: DateTime.now(),
+        ),
+      );
+      if (managed.displayId != null && managed.displayId!.isNotEmpty) {
+        _zoneAdminCodes[zoneId] = managed.displayId!;
+      }
+    } else {
+      _zoneAdminCodes.remove(zoneId);
+    }
     final existingIdx = _customZones.indexWhere((z) => z.id == zoneId);
     if (existingIdx >= 0) {
       _customZones[existingIdx] = _customZones[existingIdx].copyWith(
@@ -1691,6 +1703,10 @@ class CanonicalZones {
       _customZones.add(zone);
     }
     _zoneVertexOverrides[zone.id] = zone.vertices;
+    if (zone.assignedAdminId != null && zone.assignedAdminId!.isNotEmpty) {
+      _zoneAssignedAdminIds[zone.id] = zone.assignedAdminId;
+      _zoneAssignedAdminNames[zone.id] = zone.assignedAdminName;
+    }
     zonesRevision.value++;
     if (syncRemote) {
       unawaited(DistributionSyncService.pushCustomZone(zone));
@@ -1719,6 +1735,10 @@ class CanonicalZones {
         changed = true;
       }
       _zoneVertexOverrides[z.id] = z.vertices;
+      if (z.assignedAdminId != null && z.assignedAdminId!.isNotEmpty) {
+        _zoneAssignedAdminIds[z.id] = z.assignedAdminId;
+        _zoneAssignedAdminNames[z.id] = z.assignedAdminName;
+      }
     }
     if (changed) {
       zonesRevision.value++;

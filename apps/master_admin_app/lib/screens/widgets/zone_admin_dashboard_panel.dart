@@ -328,7 +328,17 @@ class _ZoneAdminDashboardPanelState extends ConsumerState<ZoneAdminDashboardPane
 
     if (!mounted) return;
 
-    UserProfile? selectedAdmin = admins.isNotEmpty ? admins.first : null;
+    final currentAdminId = widget.zone.assignedAdminId ??
+        CanonicalZones.all.firstWhere((z) => z.id == widget.zone.id, orElse: () => widget.zone).assignedAdminId;
+
+    UserProfile? selectedAdmin;
+    if (currentAdminId != null) {
+      final matches = admins.where((a) => a.id == currentAdminId || a.displayId == currentAdminId);
+      if (matches.isNotEmpty) {
+        selectedAdmin = matches.first;
+      }
+    }
+    selectedAdmin ??= admins.isNotEmpty ? admins.first : null;
 
     showDialog(
       context: context,
@@ -455,7 +465,9 @@ class _ZoneAdminDashboardPanelState extends ConsumerState<ZoneAdminDashboardPane
 
                         ref.invalidate(zonesListProvider);
                         if (mounted) {
-                          setState(() {});
+                          setState(() {
+                            _adminCode = admin.displayId;
+                          });
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -1355,12 +1367,20 @@ class _ZoneAdminDashboardPanelState extends ConsumerState<ZoneAdminDashboardPane
                                       ],
                                     ),
                                     const SizedBox(height: 2),
-                                    Text(
-                                      'Assigned Admin ID / Code: ${_adminCode ?? "10001"}',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Color(0xFF64748B),
-                                      ),
+                                    Builder(
+                                      builder: (context) {
+                                        final displayCode = _adminCode ??
+                                            (assignedAdminName.contains('(ID:')
+                                                ? RegExp(r'\(ID:\s*([^\)]+)\)').firstMatch(assignedAdminName)?.group(1)
+                                                : (assignedAdminId.replaceAll('admin-', '').replaceAll('admin-code-', '')));
+                                        return Text(
+                                          'Assigned Admin ID / Code: ${(displayCode != null && displayCode.isNotEmpty) ? displayCode : "Not Assigned"}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),

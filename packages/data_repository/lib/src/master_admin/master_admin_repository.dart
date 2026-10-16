@@ -309,17 +309,36 @@ class SupabaseMasterAdminRepository implements IMasterAdminRepository {
   @override
   Future<Zone> saveZone(Zone zone, List<ZoneVertex> vertices, {String? assignedAdminId}) async {
     final existingIndex = _mockZones.indexWhere((z) => z.id == zone.id);
-    final resolvedAdmin = assignedAdminId != null
-        ? _mockAdmins.firstWhere((a) => a.id == assignedAdminId, orElse: () => _mockAdmins.first)
-        : null;
+    final targetAdminId = assignedAdminId ?? zone.assignedAdminId;
+
+    UserProfile? resolvedAdmin;
+    if (targetAdminId != null && targetAdminId.isNotEmpty) {
+      final managed = CanonicalZones.getManagedAdmins();
+      final idx = managed.indexWhere((a) => a.id == targetAdminId || a.displayId == targetAdminId);
+      if (idx >= 0) {
+        resolvedAdmin = managed[idx];
+      } else {
+        final mockIdx = _mockAdmins.indexWhere((a) => a.id == targetAdminId || a.displayId == targetAdminId);
+        if (mockIdx >= 0) {
+          resolvedAdmin = _mockAdmins[mockIdx];
+        }
+      }
+    }
+
+    String? adminName = zone.assignedAdminName;
+    if (adminName == null || adminName.isEmpty) {
+      if (resolvedAdmin != null) {
+        adminName = resolvedAdmin.fullName.isNotEmpty
+            ? '${resolvedAdmin.fullName} (ID: ${resolvedAdmin.displayId})'
+            : 'Admin Code: ${resolvedAdmin.displayId}';
+      }
+    }
 
     final updated = zone.copyWith(
       id: zone.id.isEmpty ? 'z-${DateTime.now().millisecondsSinceEpoch}' : zone.id,
       vertices: vertices,
-      assignedAdminId: assignedAdminId,
-      assignedAdminName: resolvedAdmin != null
-          ? '${resolvedAdmin.fullName} (ID: ${resolvedAdmin.displayId})'
-          : null,
+      assignedAdminId: targetAdminId,
+      assignedAdminName: adminName,
       updatedAt: DateTime.now(),
     );
 
@@ -327,6 +346,16 @@ class SupabaseMasterAdminRepository implements IMasterAdminRepository {
       _mockZones[existingIndex] = updated;
     } else {
       _mockZones.insert(0, updated);
+    }
+
+    if (targetAdminId != null && targetAdminId.isNotEmpty) {
+      CanonicalZones.assignAdminToZone(
+        zoneId: updated.id,
+        adminId: targetAdminId,
+        adminName: adminName,
+        adminPhone: resolvedAdmin?.phoneNumber,
+        syncRemote: false,
+      );
     }
 
     CanonicalZones.registerCustomZone(updated, syncRemote: true);
