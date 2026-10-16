@@ -68,6 +68,40 @@ void main() {
       // Employees remain assigned and active in the zone
       expect(CanonicalZones.getEmployeeAssignedZoneIds(empId), contains(zoneId));
     });
+
+    test('6. New admin has 0 managed employees by default and does not inherit mock employees', () {
+      // Testing admin with a new admin ID
+      final newAdminEmployees = CanonicalZones.getManagedEmployees(adminId: 'admin-code-10004');
+      expect(newAdminEmployees, isEmpty);
+
+      final newAdminEmployees2 = CanonicalZones.getManagedEmployees(adminId: '10004');
+      expect(newAdminEmployees2, isEmpty);
+    });
+
+    test('7. Newly created custom zone has 0 assigned employees and does not auto-assign emp-20001', () {
+      final customZone = Zone(
+        id: 'z-custom-isolated-test',
+        name: 'Isolated Custom Zone',
+        colorHex: '#1E88E5',
+        isActive: true,
+        isArchived: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        vertices: const [
+          ZoneVertex(sequenceOrder: 0, latitude: 22.58, longitude: 88.35),
+          ZoneVertex(sequenceOrder: 1, latitude: 22.59, longitude: 88.36),
+          ZoneVertex(sequenceOrder: 2, latitude: 22.57, longitude: 88.36),
+        ],
+      );
+
+      CanonicalZones.registerCustomZone(customZone, syncRemote: false);
+
+      final assignedEmps = CanonicalZones.getZoneAssignedEmployees(customZone.id);
+      expect(assignedEmps, isEmpty);
+
+      final emp1Zones = CanonicalZones.getEmployeeAssignedZoneIds('emp-20001');
+      expect(emp1Zones, isNot(contains(customZone.id)));
+    });
   });
 
   group('Shop Moderation & Under Process Flow Tests', () {

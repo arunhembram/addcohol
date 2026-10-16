@@ -260,22 +260,9 @@ void main() async {
               final zMap = data['customZone'] as Map<String, dynamic>;
               final zId = zMap['id'] as String?;
               if (zId != null && zId.isNotEmpty) {
-                final isNew = !customZones.containsKey(zId);
                 customZones[zId] = zMap;
                 saveZonesToStorage();
                 print('SYNC: Custom Zone registered/updated: ${zMap['name']} ($zId)');
-
-                if (isNew) {
-                  final emp1List = employeeZoneAssignments.putIfAbsent('emp-20001', () => [
-                    'z-kolkata-central',
-                    'z-saltlake-sector5',
-                  ]);
-                  if (!emp1List.contains(zId)) {
-                    emp1List.add(zId);
-                    saveEmployeeAssignmentsToStorage();
-                    print('SYNC: Auto-assigned new custom zone $zId to emp-20001');
-                  }
-                }
               }
             }
 
@@ -283,22 +270,9 @@ void main() async {
               final zMap = data['zone'] as Map<String, dynamic>;
               final zId = zMap['id'] as String?;
               if (zId != null && zId.isNotEmpty) {
-                final isNew = !customZones.containsKey(zId);
                 customZones[zId] = zMap;
                 saveZonesToStorage();
                 print('SYNC: Custom Zone registered/updated: ${zMap['name']} ($zId)');
-
-                if (isNew) {
-                  final emp1List = employeeZoneAssignments.putIfAbsent('emp-20001', () => [
-                    'z-kolkata-central',
-                    'z-saltlake-sector5',
-                  ]);
-                  if (!emp1List.contains(zId)) {
-                    emp1List.add(zId);
-                    saveEmployeeAssignmentsToStorage();
-                    print('SYNC: Auto-assigned new custom zone $zId to emp-20001');
-                  }
-                }
               }
             }
 

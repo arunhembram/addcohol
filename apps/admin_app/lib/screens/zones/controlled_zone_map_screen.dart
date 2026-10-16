@@ -62,6 +62,19 @@ class _ControlledZoneMapScreenState
     super.initState();
     _selectedZoneId = widget.zoneId;
     _hoveredZoneId = widget.zoneId;
+
+    // Auto-center map camera position directly on the target zone
+    final targetZone = CanonicalZones.all.firstWhere(
+      (z) => z.id == widget.zoneId,
+      orElse: () => CanonicalZones.kolkataCentral,
+    );
+    if (targetZone.vertices.isNotEmpty) {
+      final center = _getZoneCenter(targetZone);
+      _centerLat = center.latitude;
+      _centerLng = center.longitude;
+      _zoom = 15.5;
+    }
+
     _loadCategoryMarkerIcons();
 
     // 700ms interval for blinking overdue follow-up markers (alternates blue and orange)
@@ -88,6 +101,22 @@ class _ControlledZoneMapScreenState
         setState(() {});
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(ControlledZoneMapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.zoneId != widget.zoneId) {
+      _selectedZoneId = widget.zoneId;
+      _hoveredZoneId = widget.zoneId;
+      final targetZone = CanonicalZones.all.firstWhere(
+        (z) => z.id == widget.zoneId,
+        orElse: () => CanonicalZones.kolkataCentral,
+      );
+      if (targetZone.vertices.isNotEmpty) {
+        _focusOnZone(targetZone, zoomLevel: 15.5);
+      }
+    }
   }
 
   void _loadCategoryMarkerIcons() async {
@@ -744,16 +773,19 @@ class _ControlledZoneMapScreenState
             tooltip: 'Reset Map View',
             icon: const Icon(Icons.my_location),
             onPressed: () {
-              setState(() {
-                _centerLat = 22.5760;
-                _centerLng = 88.4020;
-                _zoom = 13.8;
-                _selectedZoneId = null;
-                _hoveredZoneId = null;
-              });
-              _googleMapController?.animateCamera(
-                CameraUpdate.newLatLngZoom(const LatLng(22.5760, 88.4020), 13.8),
-              );
+              final targetZone = zoneDetailAsync.asData?.value ??
+                  controlledZonesAsync.asData?.value.firstWhere(
+                    (z) => z.id == (_selectedZoneId ?? widget.zoneId),
+                    orElse: () => CanonicalZones.all.firstWhere(
+                      (z) => z.id == (_selectedZoneId ?? widget.zoneId),
+                      orElse: () => CanonicalZones.kolkataCentral,
+                    ),
+                  ) ??
+                  CanonicalZones.all.firstWhere(
+                    (z) => z.id == (_selectedZoneId ?? widget.zoneId),
+                    orElse: () => CanonicalZones.kolkataCentral,
+                  );
+              _focusOnZone(targetZone, zoomLevel: 15.5);
             },
           ),
           const SizedBox(width: 8),
@@ -886,6 +918,9 @@ class _ControlledZoneMapScreenState
                   ),
                   onMapCreated: (controller) {
                     _googleMapController = controller;
+                    if (activeZone.vertices.isNotEmpty) {
+                      _focusOnZone(activeZone, zoomLevel: 15.5);
+                    }
                   },
                   onCameraMove: (position) {
                     final oldZoom = _zoom;

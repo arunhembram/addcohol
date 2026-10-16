@@ -1278,25 +1278,6 @@ class CanonicalZones {
     } else if (_defaultEmployeeZoneAssignments.containsKey('emp-$cleanId')) {
       result.addAll(_defaultEmployeeZoneAssignments['emp-$cleanId']!);
     }
-
-    // Auto-include custom zones created by Master Admin for default field employee (emp-20001)
-    // unless explicitly assigned to another employee
-    if (cleanId == 'emp-20001' || cleanId == '20001') {
-      for (final cz in _customZones) {
-        if (!result.contains(cz.id)) {
-          bool assignedToOther = false;
-          for (final entry in _employeeZoneAssignments.entries) {
-            if (entry.key != 'emp-20001' && entry.key != '20001' && entry.value.contains(cz.id)) {
-              assignedToOther = true;
-              break;
-            }
-          }
-          if (!assignedToOther) {
-            result.add(cz.id);
-          }
-        }
-      }
-    }
     return result;
   }
 
@@ -1373,7 +1354,25 @@ class CanonicalZones {
     ),
   ];
 
-  /// Get list of managed employees (returns unmodifiable copy)
+  static bool _matchesAdminId(String? managedBy, String targetAdminId) {
+    if (managedBy == null || managedBy.trim().isEmpty) return false;
+    final cleanManaged = managedBy.trim();
+    final cleanTarget = targetAdminId.trim();
+    if (cleanManaged == cleanTarget) return true;
+
+    String norm(String s) => s
+        .replaceAll('admin-code-', '')
+        .replaceAll('admin-', '')
+        .replaceAll('mock-admin-', '')
+        .trim();
+
+    final normManaged = norm(cleanManaged);
+    final normTarget = norm(cleanTarget);
+    return normManaged.isNotEmpty && normManaged == normTarget;
+  }
+
+  /// Get list of managed employees (returns unmodifiable copy).
+  /// Strictly filters by adminId so new admins start with an empty employee roster.
   static List<UserProfile> getManagedEmployees({String? adminId}) {
     if (adminId == null || adminId.isEmpty) {
       return List.unmodifiable(_managedEmployees.where((e) => e.isActive));
@@ -1381,7 +1380,7 @@ class CanonicalZones {
     return List.unmodifiable(_managedEmployees.where((e) {
       if (!e.isActive) return false;
       final mgr = e.metadata['managed_by_admin']?.toString();
-      return mgr == null || mgr == adminId || mgr == 'admin-10001';
+      return _matchesAdminId(mgr, adminId);
     }));
   }
 
@@ -1710,13 +1709,6 @@ class CanonicalZones {
     zonesRevision.value++;
     if (syncRemote) {
       unawaited(DistributionSyncService.pushCustomZone(zone));
-      if (isNew) {
-        final currentAssignments = getEmployeeAssignedZoneIds('emp-20001');
-        unawaited(DistributionSyncService.pushEmployeeZoneAssignment(
-          'emp-20001',
-          currentAssignments,
-        ));
-      }
     }
   }
 
