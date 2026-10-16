@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:app_core/app_core.dart';
 import 'package:data_repository/data_repository.dart';
 import 'package:design_system/design_system.dart';
@@ -8,8 +9,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/admin_state_providers.dart';
 
-class EmployeeListScreen extends ConsumerWidget {
+class EmployeeListScreen extends ConsumerStatefulWidget {
   const EmployeeListScreen({super.key});
+
+  @override
+  ConsumerState<EmployeeListScreen> createState() => _EmployeeListScreenState();
+}
+
+class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
+  Timer? _syncTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    DistributionSyncService.fetchRemoteState();
+    int lastRev = CanonicalZones.zonesRevision.value;
+    _syncTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+      if (!mounted) return;
+      await CanonicalZones.syncWithRemote();
+      if (!mounted) return;
+      if (lastRev != CanonicalZones.zonesRevision.value) {
+        lastRev = CanonicalZones.zonesRevision.value;
+        ref.invalidate(controlledEmployeesProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    super.dispose();
+  }
 
   void _showEmployeeProfileModal(
     BuildContext context,
@@ -348,7 +378,7 @@ class EmployeeListScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final filteredAsync = ref.watch(filteredEmployeesProvider);
     final controlledZonesAsync = ref.watch(controlledZonesProvider);
     final currentStatusFilter = ref.watch(employeeStatusFilterProvider);

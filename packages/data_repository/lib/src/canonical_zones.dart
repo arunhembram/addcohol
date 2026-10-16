@@ -1385,7 +1385,10 @@ class CanonicalZones {
   }
 
   /// Create a new unclaimed Employee Code (e.g. 20004) without a name
-  static UserProfile createEmployeeCode({String? managedByAdminId}) {
+  static UserProfile createEmployeeCode({
+    String? managedByAdminId,
+    bool syncRemote = true,
+  }) {
     final code = (_employeeDisplayIdCounter++).toString();
     final newEmp = UserProfile(
       id: 'emp-code-$code',
@@ -1400,6 +1403,9 @@ class CanonicalZones {
     );
     _managedEmployees.insert(0, newEmp);
     zonesRevision.value++;
+    if (syncRemote) {
+      unawaited(DistributionSyncService.pushEmployee(newEmp));
+    }
     return newEmp;
   }
 
@@ -1408,6 +1414,7 @@ class CanonicalZones {
     String code, {
     required String fullName,
     required String phoneNumber,
+    bool syncRemote = true,
   }) {
     final cleanCode = code.trim();
     final idx = _managedEmployees.indexWhere((e) => e.displayId == cleanCode);
@@ -1416,13 +1423,55 @@ class CanonicalZones {
       final updated = existing.copyWith(
         fullName: fullName.trim(),
         phoneNumber: phoneNumber.trim(),
-        email: '${fullName.trim().toLowerCase().replaceAll(RegExp(r'\\s+'), '.')}@shopad.local',
+        email: '${fullName.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@shopad.local',
       );
       _managedEmployees[idx] = updated;
       zonesRevision.value++;
+      if (syncRemote) {
+        unawaited(DistributionSyncService.pushEmployee(updated));
+      }
       return updated;
     }
     return null;
+  }
+
+  /// Bulk sync managed employees received from remote sync server
+  static void syncRemoteEmployees(List<UserProfile> remote) {
+    bool changed = false;
+    for (final r in remote) {
+      final key = r.displayId ?? r.id;
+      final idx = _managedEmployees.indexWhere((e) => e.displayId == key || e.id == r.id);
+      if (idx >= 0) {
+        final existing = _managedEmployees[idx];
+        if (existing.fullName != r.fullName ||
+            existing.phoneNumber != r.phoneNumber ||
+            existing.isActive != r.isActive ||
+            existing.email != r.email) {
+          final mergedMeta = Map<String, dynamic>.from(existing.metadata)..addAll(r.metadata);
+          _managedEmployees[idx] = existing.copyWith(
+            fullName: r.fullName,
+            phoneNumber: r.phoneNumber,
+            email: r.email,
+            isActive: r.isActive,
+            metadata: mergedMeta,
+          );
+          changed = true;
+        }
+      } else {
+        _managedEmployees.insert(0, r);
+        changed = true;
+      }
+
+      if (r.displayId != null) {
+        final numId = int.tryParse(r.displayId!);
+        if (numId != null && numId >= _employeeDisplayIdCounter) {
+          _employeeDisplayIdCounter = numId + 1;
+        }
+      }
+    }
+    if (changed) {
+      zonesRevision.value++;
+    }
   }
 
   /// Soft delete an employee from managed employees (past historical shop visits preserve attribution)

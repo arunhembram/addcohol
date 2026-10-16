@@ -313,6 +313,18 @@ class DistributionSyncService {
           }
         }
 
+        // 9. Sync managed employees created by Admin App or paired by Employee App
+        if (data['employees'] is List) {
+          final empsJson = data['employees'] as List;
+          final remoteEmployees = empsJson
+              .whereType<Map<String, dynamic>>()
+              .map((j) => UserProfile.fromJson(j))
+              .toList();
+          if (remoteEmployees.isNotEmpty) {
+            CanonicalZones.syncRemoteEmployees(remoteEmployees);
+          }
+        }
+
         _lastSyncTime = DateTime.now();
         return true;
       }
@@ -618,6 +630,41 @@ class DistributionSyncService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'admin': admin.toJson(),
+            }),
+          )
+          .timeout(const Duration(milliseconds: 1500));
+    } catch (_) {}
+  }
+
+  /// Push employee profile (newly generated code or paired employee) to Supabase and sync server
+  static Future<void> pushEmployee(UserProfile employee) async {
+    // 1. Live Supabase upsert (with graceful fallback if table does not exist or network is offline)
+    final client = _supabaseClient;
+    if (client != null && employee.displayId != null) {
+      try {
+        await client.from('profiles').upsert({
+          'id': employee.id,
+          'email': employee.email,
+          'full_name': employee.fullName,
+          'role': 'employee',
+          'phone_number': employee.phoneNumber ?? '',
+          'display_id': employee.displayId,
+          'is_active': employee.isActive,
+          'metadata': employee.metadata,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).timeout(const Duration(seconds: 3));
+      } catch (_) {}
+    }
+
+    // 2. Development sync server
+    if (!isSyncEnabled) return;
+    try {
+      await http
+          .post(
+            Uri.parse(_syncServerUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'employee': employee.toJson(),
             }),
           )
           .timeout(const Duration(milliseconds: 1500));

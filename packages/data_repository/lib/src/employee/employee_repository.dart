@@ -292,7 +292,7 @@ class SupabaseEmployeeRepository implements IEmployeeRepository {
       return canonicalAssigned;
     }
 
-    final allowedIds = _employeeZoneMap[resolvedId] ?? _employeeZoneMap['emp-20001']!;
+    final allowedIds = _employeeZoneMap[resolvedId] ?? const <String>[];
     return _mockZones.where((z) => allowedIds.contains(z.id)).toList();
   }
 

@@ -102,6 +102,30 @@ void main() {
       final emp1Zones = CanonicalZones.getEmployeeAssignedZoneIds('emp-20001');
       expect(emp1Zones, isNot(contains(customZone.id)));
     });
+
+    test('8. Remote employee sync updates employee code to paired full name', () {
+      final codeEmp = CanonicalZones.createEmployeeCode(managedByAdminId: 'admin-code-10004', syncRemote: false);
+      expect(codeEmp.fullName, isEmpty);
+
+      final pairedFromRemote = UserProfile(
+        id: codeEmp.id,
+        email: 'subho.das@shopad.local',
+        fullName: 'Subho Das',
+        role: UserRole.employee,
+        phoneNumber: '+91 98111 22334',
+        displayId: codeEmp.displayId,
+        isActive: true,
+        createdAt: DateTime.now(),
+        metadata: {'managed_by_admin': 'admin-code-10004', 'assigned_zones': []},
+      );
+
+      CanonicalZones.syncRemoteEmployees([pairedFromRemote]);
+
+      final managed = CanonicalZones.getManagedEmployees(adminId: 'admin-code-10004');
+      final updated = managed.firstWhere((e) => e.displayId == codeEmp.displayId);
+      expect(updated.fullName, equals('Subho Das'));
+      expect(updated.phoneNumber, equals('+91 98111 22334'));
+    });
   });
 
   group('Shop Moderation & Under Process Flow Tests', () {

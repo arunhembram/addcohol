@@ -13,6 +13,7 @@ void main() async {
   final Map<String, Map<String, dynamic>> zonePricings = {};
   final Map<String, List<String>> employeeZoneAssignments = {};
   final Map<String, Map<String, dynamic>> admins = {};
+  final Map<String, Map<String, dynamic>> employees = {};
 
   final zonesStorageFile = File('tool/.sync_zones.json');
   if (zonesStorageFile.existsSync()) {
@@ -119,6 +120,32 @@ void main() async {
     }
   }
 
+  final employeeProfilesFile = File('tool/.sync_employees.json');
+  if (employeeProfilesFile.existsSync()) {
+    try {
+      final text = employeeProfilesFile.readAsStringSync();
+      if (text.isNotEmpty) {
+        final decoded = jsonDecode(text) as Map<String, dynamic>;
+        for (final entry in decoded.entries) {
+          if (entry.value is Map<String, dynamic>) {
+            employees[entry.key] = entry.value as Map<String, dynamic>;
+          }
+        }
+        print('SYNC: Loaded ${employees.length} employees from storage');
+      }
+    } catch (e) {
+      print('SYNC: Error loading saved employees: $e');
+    }
+  }
+
+  void saveEmployeesToStorage() {
+    try {
+      employeeProfilesFile.writeAsStringSync(jsonEncode(employees));
+    } catch (e) {
+      print('SYNC: Error persisting employees: $e');
+    }
+  }
+
   final server = await HttpServer.bind(InternetAddress.anyIPv4, 8089);
   print('DISTRIBUTION_SYNC_SERVER_STARTED: http://localhost:8089');
 
@@ -148,6 +175,7 @@ void main() async {
           'zonePricings': zonePricings,
           'employeeZoneAssignments': employeeZoneAssignments,
           'admins': admins.values.toList(),
+          'employees': employees.values.toList(),
         });
         request.response
           ..headers.contentType = ContentType.json
@@ -317,6 +345,17 @@ void main() async {
               }
             }
 
+            // 9d. Employee profiles (generated codes & paired profiles)
+            if (data.containsKey('employee') && data['employee'] is Map<String, dynamic>) {
+              final eMap = data['employee'] as Map<String, dynamic>;
+              final eKey = (eMap['display_id'] ?? eMap['id']) as String?;
+              if (eKey != null && eKey.isNotEmpty) {
+                employees[eKey] = eMap;
+                saveEmployeesToStorage();
+                print('SYNC: Employee profile registered/updated: ${eMap['full_name']} ($eKey)');
+              }
+            }
+
             // 10. Reset all (for fresh development state)
             if (data.containsKey('resetAll') && data['resetAll'] == true) {
               zoneModes.clear();
@@ -330,11 +369,13 @@ void main() async {
               zonePricings.clear();
               employeeZoneAssignments.clear();
               admins.clear();
+              employees.clear();
               saveZonesToStorage();
               savePricingToStorage();
               saveEmployeeAssignmentsToStorage();
               saveAdminsToStorage();
-              print('SYNC: All distribution, gone states, custom zones, pricing, employee assignments and admins cleared');
+              saveEmployeesToStorage();
+              print('SYNC: All distribution, gone states, custom zones, pricing, employee assignments, admins and employees cleared');
             }
           }
         } catch (e) {
@@ -353,6 +394,7 @@ void main() async {
           'zonePricings': zonePricings,
           'employeeZoneAssignments': employeeZoneAssignments,
           'admins': admins.values.toList(),
+          'employees': employees.values.toList(),
         });
         request.response
           ..headers.contentType = ContentType.json

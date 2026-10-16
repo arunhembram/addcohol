@@ -172,6 +172,9 @@ class EmployeeAuthNotifier extends StateNotifier<EmployeeAuthState> {
       final cleanCode = code.trim();
       final fullName = '${firstName.trim()} ${lastName.trim()}';
 
+      // Ensure remote employee codes are fetched before pairing
+      await DistributionSyncService.fetchRemoteState();
+
       var emp = CanonicalZones.pairEmployeeCode(
         cleanCode,
         fullName: fullName,
@@ -188,9 +191,11 @@ class EmployeeAuthNotifier extends StateNotifier<EmployeeAuthState> {
         isActive: true,
         createdAt: DateTime.now(),
         metadata: const {
-          'assigned_zones': ['z-kolkata-central', 'z-saltlake-sector5'],
+          'assigned_zones': <String>[],
         },
       );
+
+      unawaited(DistributionSyncService.pushEmployee(emp));
 
       state = state.copyWith(
         isLoading: false,
@@ -407,14 +412,9 @@ final assignedShopsDailyUploadsProvider =
   return result;
 });
 
-/// Global distribution mode toggle for the field employee across all their assigned zones
-final employeeGlobalDistributionModeProvider = StateProvider<bool>((ref) {
-  final zones = ref.watch(assignedZonesProvider).asData?.value ?? [];
-  if (zones.isEmpty) {
-    return CanonicalZones.isDistributionModeActive('z-kolkata-central');
-  }
-  return zones.any((z) => CanonicalZones.isDistributionModeActive(z.id));
-});
+/// Global distribution mode toggle for the field employee across all their assigned zones.
+/// Strictly defaults to false (Normal Mode) on app launch as required.
+final employeeGlobalDistributionModeProvider = StateProvider<bool>((ref) => false);
 
 /// Track which zones have distribution mode active (mirrors global employee switch)
 final employeeZoneDistributionModeProvider =
