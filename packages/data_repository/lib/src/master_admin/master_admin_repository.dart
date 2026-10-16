@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:app_core/app_core.dart';
 import 'package:domain_models/domain_models.dart';
 import '../canonical_zones.dart';
+import '../sync/distribution_sync_service.dart';
 
 
 abstract class IMasterAdminRepository {
@@ -421,19 +422,12 @@ class SupabaseMasterAdminRepository implements IMasterAdminRepository {
 
   @override
   Future<List<UserProfile>> getAdmins() async {
-    if (!_isLive) {
-      return CanonicalZones.getManagedAdmins();
+    if (_isLive) {
+      try {
+        await DistributionSyncService.fetchRemoteState();
+      } catch (_) {}
     }
-
-    try {
-      final client = supabaseManager.client!;
-      final res = await client.from('profiles').select().eq('role', 'admin').order('full_name');
-      final dbAdmins = (res as List).map((row) => UserProfile.fromJson(row as Map<String, dynamic>)).toList();
-      if (dbAdmins.isNotEmpty) return dbAdmins;
-      return CanonicalZones.getManagedAdmins();
-    } catch (_) {
-      return CanonicalZones.getManagedAdmins();
-    }
+    return CanonicalZones.getManagedAdmins();
   }
 
   @override

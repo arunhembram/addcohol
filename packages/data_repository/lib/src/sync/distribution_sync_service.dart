@@ -17,6 +17,7 @@ class DistributionSyncService {
   static DateTime? _lastSyncTime;
   static bool isSyncEnabled = true;
   static RealtimeChannel? _supabasePricingChannel;
+  static RealtimeChannel? _supabaseAdminCodesChannel;
 
   static DateTime? get lastSyncTime => _lastSyncTime;
 
@@ -52,10 +53,52 @@ class DistributionSyncService {
     } catch (_) {}
   }
 
+  /// Initialize Supabase Realtime subscription for admin codes & assignments.
+  static void initSupabaseRealtimeAdmins() {
+    final client = _supabaseClient;
+    if (client == null || _supabaseAdminCodesChannel != null) return;
+    try {
+      _supabaseAdminCodesChannel = client
+          .channel('public:admin_codes')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'admin_codes',
+            callback: (payload) {
+              final newRec = payload.newRecord;
+              if (newRec.isNotEmpty) {
+                final code = newRec['code'] as String?;
+                if (code != null && code.isNotEmpty) {
+                  final rawZones = newRec['assigned_zone_ids'];
+                  final zones = (rawZones is List)
+                      ? rawZones.map((e) => e.toString()).toList()
+                      : <String>[];
+                  final status = newRec['status'] as String? ?? 'pending';
+                  final admin = UserProfile(
+                    id: 'admin-code-$code',
+                    email: '',
+                    fullName: newRec['full_name'] as String? ?? '',
+                    role: UserRole.admin,
+                    phoneNumber: newRec['phone_number'] as String? ?? '',
+                    displayId: code,
+                    isActive: status != 'expelled',
+                    metadata: {'admin_zones': zones},
+                    createdAt: DateTime.now(),
+                  );
+                  CanonicalZones.syncRemoteAdmins([admin]);
+                }
+              }
+            },
+          )
+          .subscribe();
+    } catch (_) {}
+  }
+
   /// Fetch remote distribution state from Supabase (production) or local sync server (development)
   static Future<bool> fetchRemoteState() async {
-    // 0. Ensure Supabase Realtime channel is active when connected to Supabase
+    // 0. Ensure Supabase Realtime channels are active when connected to Supabase
     initSupabaseRealtimePricing();
+    initSupabaseRealtimeAdmins();
 
     // 0b. Fetch from Supabase zone_pricing table if Supabase is active
     final client = _supabaseClient;
@@ -73,6 +116,61 @@ class DistributionSyncService {
           }
           if (configs.isNotEmpty) {
             CanonicalZones.syncRemoteZonePricings(configs);
+          }
+        }
+      } catch (_) {}
+
+      // 0c. Fetch from Supabase admin_codes table for live cross-device code & pairing sync
+      try {
+        final resCodes = await client
+            .from('admin_codes')
+            .select()
+            .timeout(const Duration(seconds: 3));
+        if (resCodes.isNotEmpty) {
+          final List<UserProfile> codeAdmins = [];
+          for (final row in resCodes) {
+            final code = row['code'] as String?;
+            if (code != null && code.isNotEmpty) {
+              final rawZones = row['assigned_zone_ids'];
+              final zones = (rawZones is List)
+                  ? rawZones.map((e) => e.toString()).toList()
+                  : <String>[];
+              final status = row['status'] as String? ?? 'pending';
+              codeAdmins.add(UserProfile(
+                id: 'admin-code-$code',
+                email: '',
+                fullName: row['full_name'] as String? ?? '',
+                role: UserRole.admin,
+                phoneNumber: row['phone_number'] as String? ?? '',
+                displayId: code,
+                isActive: status != 'expelled',
+                metadata: {'admin_zones': zones},
+                createdAt: DateTime.now(),
+              ));
+            }
+          }
+          if (codeAdmins.isNotEmpty) {
+            CanonicalZones.syncRemoteAdmins(codeAdmins);
+          }
+        }
+      } catch (_) {}
+
+      // 0d. Fetch any registered admins from Supabase profiles table
+      try {
+        final resProfiles = await client
+            .from('profiles')
+            .select()
+            .eq('role', 'admin')
+            .timeout(const Duration(seconds: 3));
+        if (resProfiles.isNotEmpty) {
+          final List<UserProfile> dbAdmins = [];
+          for (final row in resProfiles) {
+            try {
+              dbAdmins.add(UserProfile.fromJson(row as Map<String, dynamic>));
+            } catch (_) {}
+          }
+          if (dbAdmins.isNotEmpty) {
+            CanonicalZones.syncRemoteAdmins(dbAdmins);
           }
         }
       } catch (_) {}
@@ -484,15 +582,34 @@ class DistributionSyncService {
     } catch (_) {}
   }
 
-  /// Push admin profile (newly generated code or paired admin) to sync server
+  /// Push admin profile (newly generated code or paired admin) to Supabase and sync server
   static Future<void> pushAdmin(UserProfile admin) async {
+    // 1. Live Supabase admin_codes upsert (persists code, paired name, phone, zones, and expel status)
     final client = _supabaseClient;
-    if (client != null && admin.fullName.isNotEmpty) {
+    if (client != null && admin.displayId != null) {
       try {
-        await client.from('profiles').upsert(admin.toJson()).timeout(const Duration(seconds: 3));
-      } catch (_) {}
+        final zones = (admin.metadata['admin_zones'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            <String>[];
+        final status = admin.isActive
+            ? (admin.fullName.trim().isNotEmpty ? 'claimed' : 'pending')
+            : 'expelled';
+
+        await client.from('admin_codes').upsert({
+          'code': admin.displayId,
+          'full_name': admin.fullName,
+          'phone_number': admin.phoneNumber ?? '',
+          'status': status,
+          'assigned_zone_ids': zones,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).timeout(const Duration(seconds: 3));
+      } catch (_) {
+        // Fall back gracefully if table does not exist or network is offline
+      }
     }
 
+    // 2. Development sync server
     if (!isSyncEnabled) return;
     try {
       await http

@@ -265,6 +265,32 @@ class SupabaseAdminRepository implements IAdminRepository {
         if (res != null) {
           return UserProfile.fromJson(res);
         }
+
+        // Check live admin_codes table for claimed or pending code
+        final codeRes = await client
+            .from('admin_codes')
+            .select()
+            .eq('code', cleanId)
+            .neq('status', 'expelled')
+            .maybeSingle();
+
+        if (codeRes != null) {
+          final rawZones = codeRes['assigned_zone_ids'];
+          final zones = (rawZones is List)
+              ? rawZones.map((e) => e.toString()).toList()
+              : <String>[];
+          return UserProfile(
+            id: 'admin-code-$cleanId',
+            email: '',
+            fullName: codeRes['full_name'] as String? ?? '',
+            role: UserRole.admin,
+            phoneNumber: codeRes['phone_number'] as String? ?? '',
+            displayId: cleanId,
+            isActive: codeRes['status'] != 'expelled',
+            metadata: {'admin_zones': zones},
+            createdAt: DateTime.now(),
+          );
+        }
       } catch (_) {}
     }
 
